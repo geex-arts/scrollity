@@ -47,6 +47,7 @@ export class ScrollHandler {
   lastTouch;
   triggers: { trigger: ScrollTriggerDirective, activated: boolean }[] = [];
   previousScrollPosition = 0;
+  previousStickTo: ScrollTriggerDirective;
 
   constructor(private service: ScrollService,
               public element: HTMLElement,
@@ -334,6 +335,10 @@ export class ScrollHandler {
   handleDefaultScrollEvent(deltaX, deltaY) {
     let delta = deltaX + deltaY;
 
+    if (this.preventScroll(delta)) {
+      return;
+    }
+
     if (this.translate) {
       let params = this.horizontal ? { x: '-=' + delta } : { y: '-=' + delta };
 
@@ -527,6 +532,42 @@ export class ScrollHandler {
       sum += distance;
       return obj;
     });
+  }
+
+  preventScroll(delta): boolean {
+    const scrollMapItems = this._scrollMap ? this.scrollMapItemPositions : undefined;
+    const direction = delta != 0 ? delta / Math.abs(delta) : 0;
+    let stickTo: ScrollTriggerDirective;
+
+    for (let trigger of this.triggers) {
+      let triggerPosition = trigger.trigger.position;
+      const triggerDelta = triggerPosition - this.scrollPosition();
+      const triggerDirection = triggerDelta != 0 ? triggerDelta / Math.abs(triggerDelta) : 0;
+
+      if (this._scrollMap) {
+        const scrollMapItem = _.first(scrollMapItems.filter(item => item.item === trigger.trigger.scrollMapItem));
+
+        if (scrollMapItem) {
+          triggerPosition += scrollMapItem.startPosition;
+        }
+      }
+
+      if (trigger.trigger.stick != undefined
+          && triggerDirection == direction
+          && this.previousStickTo != trigger.trigger
+          && Math.abs(triggerPosition - this.scrollPosition()) <= this.viewportSize.width + trigger.trigger.stick
+          && (!stickTo || Math.abs(stickTo.position - this.scrollPosition()) > Math.abs(triggerDelta))) {
+        stickTo = trigger.trigger;
+      }
+    }
+
+    if (stickTo) {
+      this.previousStickTo = stickTo;
+      this.scrollTo(stickTo.position, 0.9);
+      return true;
+    }
+
+    return false;
   }
 
   onScroll(position) {
