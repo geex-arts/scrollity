@@ -100,7 +100,7 @@ export class ScrollHandler {
   }
 
   bind() {
-    this.subscriptions.push(this.wheelEventReleased.debounceTime(60).subscribe(() => this.handleWheelReleaseEvent()));
+    this.subscriptions.push(this.wheelEventReleased.debounceTime(600).subscribe(() => this.handleWheelReleaseEvent()));
 
     this.zone.runOutsideAngular(() => {
       this.scrollListener = () => {
@@ -185,7 +185,10 @@ export class ScrollHandler {
     e.stopPropagation();
 
     if (this.wheelEventCaptured) {
-      this.wheelEventReleased.next(e);
+      if (this.animatingScroll) {
+        this.wheelEventReleased.next(e);
+      }
+
       return;
     }
 
