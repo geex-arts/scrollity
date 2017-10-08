@@ -11,7 +11,6 @@ import * as _ from 'lodash';
 
 export type ScrollHandlerOptions = {
   horizontal?: boolean,
-  slides?: boolean,
   translate?: boolean,
   initialPosition?: number,
   viewport?: any,
@@ -23,15 +22,11 @@ export class ScrollHandler {
 
   enabled = true;
   horizontal: boolean;
-  slides: boolean;
-  _slidesObservable = new Subject<{ forwardDirection: boolean }>();
   translate: boolean;
   initialPosition: number;
   viewport: any;
   overrideScroll: boolean;
   _scrollMap: ScrollMapItem[];
-  lastSlideDate: Date;
-  lastSlideScrollDate: Date;
   timeline = new TimelineMax();
   scrollListener: any;
   mouseWheelListener: any;
@@ -54,7 +49,6 @@ export class ScrollHandler {
               private zone: NgZone,
               options: ScrollHandlerOptions) {
     this.horizontal = options.horizontal || false;
-    this.slides = options.slides || false;
     this.translate = options.translate || false;
     this.initialPosition = options.initialPosition || 0;
     this.viewport = options.viewport || element;
@@ -217,10 +211,7 @@ export class ScrollHandler {
 
     deltaX = Math.round(deltaX);
     deltaY = Math.round(deltaY);
-
-    if (this.slides) {
-      this.handleSlideScrollEvent(deltaX, deltaY);
-    } else if (this._scrollMap) {
+    if (this._scrollMap) {
       this.handleScrollMapScrollEvent(deltaX, deltaY);
     } else {
       this.handleDefaultScrollEvent(deltaX, deltaY);
@@ -266,9 +257,7 @@ export class ScrollHandler {
       return false;
     }
 
-    if (this.slides) {
-      this.handleSlideScrollEvent(deltaX, deltaY);
-    } else if (this._scrollMap) {
+    if (this._scrollMap) {
       this.handleScrollMapScrollEvent(deltaX, deltaY);
     } else {
       this.handleDefaultScrollEvent(deltaX, deltaY);
@@ -279,35 +268,6 @@ export class ScrollHandler {
 
   handleTouchEndEvent() {
     this.lastTouch = undefined;
-  }
-
-  handleSlideScrollEvent(deltaX, deltaY) {
-    const threshold = navigator.userAgent.indexOf('Mac OS X') != -1 ? 16 : 40;
-
-    if (this.lastSlideDate && new Date().getTime() - this.lastSlideDate.getTime() < 1000) {
-      if (new Date().getTime() - this.lastSlideScrollDate.getTime() < 200) {
-        this.lastSlideScrollDate = new Date();
-        return;
-      } else {
-        this.lastSlideDate = undefined;
-        this.lastSlideScrollDate = undefined;
-      }
-    } else {
-      this.lastSlideDate = undefined;
-      this.lastSlideScrollDate = undefined;
-    }
-
-    if (deltaX + deltaY <= 0 - threshold) {
-      this.lastSlideDate = new Date();
-      this.lastSlideScrollDate = new Date();
-
-      this._slidesObservable.next({ forwardDirection: false });
-    } else if (deltaX + deltaY >= threshold) {
-      this.lastSlideDate = new Date();
-      this.lastSlideScrollDate = new Date();
-
-      this._slidesObservable.next({ forwardDirection: true });
-    }
   }
 
   handleScrollMapScrollEvent(deltaX, deltaY) {
@@ -361,10 +321,6 @@ export class ScrollHandler {
     this.updateContentSize();
     this.updateTriggerPositions();
     this.updateScrollMapItems();
-  }
-
-  get slidesObservable(): Observable<{ forwardDirection: boolean }> {
-    return this._slidesObservable.asObservable();
   }
 
   scrollTo(position, duration, ease = undefined): Observable<{}> {
