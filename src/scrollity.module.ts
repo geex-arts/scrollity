@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import 'rxjs/Rx';
 
 window['_gsQueue'] = window['_gsDefine'] = null;
 window['GreenSockGlobals'] = {};
