@@ -348,59 +348,21 @@ export class ScrollHandler {
   }
 
   scrollTo(position, duration, ease = undefined): Observable<{}> {
-    if (this._scrollMap) {
-      this.scrollToMapPosition(position, duration, ease);
-      return;
-    }
-
-    let obs = new Subject();
-    let params;
-
-    if (this.translate) {
-      params = this.horizontal ? {
-        x: 0 - position,
-        onUpdateParams: ['{self}'],
-        onUpdate: tween => {
-          this._position.next(tween.target._gsTransform.x * (-1));
-        }
-      } : {
-        y: 0 - position,
-        onUpdateParams: ['{self}'],
-        onUpdate: tween => {
-          this._position.next(tween.target._gsTransform.y * (-1));
-        }
-      };
-    } else {
-      params = this.horizontal ? { scrollLeft: position } : { scrollTop: position };
-    }
-
-    params.onComplete = () => {
-      this.animatingScroll = false;
-      obs.next();
-    };
-
-    if (ease) {
-      params.ease = ease;
-    }
-
+    let obs: Observable<{}>;
     this.animatingScroll = true;
 
-    this.previousScrollPosition = this.position;
-
-    if (this._position.value != position) {
-      this._position.next(position);
-    }
-
-    if (duration) {
-      this.timeline = this.timeline.clear().to(this.element, duration, params);
+    if (this._scrollMap) {
+      obs = this.scrollToMapPosition(position, duration, ease);
     } else {
-      this.timeline = this.timeline.clear().set(this.element, params);
+      obs = this.scrollToBasicPosition(position, duration, ease);
     }
 
-    return obs.asObservable();
+    obs.subscribe(() => this.animatingScroll = false);
+
+    return obs;
   }
 
-  scrollToMapPosition(position, duration, ease = undefined) {
+  scrollToMapPosition(position, duration, ease = undefined): Observable<{}> {
     let mapDistance = 0;
     let mapPosition = { x: 0, y: 0 };
 
@@ -425,10 +387,15 @@ export class ScrollHandler {
       scrollLeft: mapPosition.x,
       scrollTop: mapPosition.y
     };
+    let obs = new Subject();
 
     if (ease) {
       params['ease'] = ease;
     }
+
+    params['onComplete'] = () => {
+      obs.next();
+    };
 
     this.previousScrollPosition = this.position;
 
@@ -442,10 +409,16 @@ export class ScrollHandler {
       this._scrollMapPosition.next(mapPosition);
     }
 
-    this.timeline = this.timeline.clear().to(this.element, duration, params);
+    if (duration) {
+      this.timeline = this.timeline.clear().to(this.element, duration, params);
+    } else {
+      this.timeline = this.timeline.clear().set(this.element, params);
+    }
+
+    return obs;
   }
 
-  scrollToBasicPosition(position, duration, ease = undefined) {
+  scrollToBasicPosition(position, duration, ease = undefined): Observable<{}> {
     this.previousScrollPosition = this.position;
 
     if (position != this._position.value) {
@@ -453,6 +426,7 @@ export class ScrollHandler {
     }
 
     let params;
+    let obs = new Subject();
 
     if (this.translate) {
       params = this.horizontal ? { x: position } : { y: position };
@@ -464,7 +438,18 @@ export class ScrollHandler {
       params['ease'] = ease;
     }
 
-    this.timeline = this.timeline.clear().to(this.element, duration, params);
+    params['onComplete'] = () => {
+      obs.next();
+      this.animatingScroll = false; // workaround
+    };
+
+    if (duration) {
+      this.timeline = this.timeline.clear().to(this.element, duration, params);
+    } else {
+      this.timeline = this.timeline.clear().set(this.element, params);
+    }
+
+    return obs;
   }
 
   get viewportSize() {
