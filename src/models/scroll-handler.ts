@@ -276,7 +276,7 @@ export class ScrollHandler {
       return false;
     }
 
-    const speed = 4;
+    const speed = 1;
     const touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
     const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
