@@ -37,7 +37,9 @@ var ScrollTriggerDirective = /** @class */ (function () {
         this.options.handler.addTrigger(this);
     };
     ScrollTriggerDirective.prototype.ngOnDestroy = function () {
-        this.options.handler.removeTrigger(this);
+        if (this.options.handler) {
+            this.options.handler.removeTrigger(this);
+        }
     };
     ScrollTriggerDirective.prototype.updatePosition = function () {
         if (!this.handler) {

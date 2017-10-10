@@ -10,15 +10,17 @@ var ScrollHandler = /** @class */ (function () {
         this.element = element;
         this.zone = zone;
         this.enabled = true;
-        this._slidesObservable = new Subject_1.Subject();
         this.timeline = new gsap_1.TimelineMax();
         this.animatingScroll = false;
+        this.instantPosition = 0;
         this._position = new BehaviorSubject_1.BehaviorSubject(0);
         this._scrollMapPosition = new BehaviorSubject_1.BehaviorSubject(undefined);
         this.triggers = [];
         this.previousScrollPosition = 0;
+        this.subscriptions = [];
+        this.wheelEventReleased = new Subject_1.Subject();
+        this.wheelEventCaptured = false;
         this.horizontal = options.horizontal || false;
-        this.slides = options.slides || false;
         this.translate = options.translate || false;
         this.initialPosition = options.initialPosition || 0;
         this.viewport = options.viewport || element;
@@ -27,19 +29,37 @@ var ScrollHandler = /** @class */ (function () {
         if (this.initialPosition) {
             this.scrollTo(this.initialPosition, 0);
         }
+        this.setInitialPosition();
         this.updateViewportSize();
         this.updateContentSize();
     }
     Object.defineProperty(ScrollHandler.prototype, "scrollMap", {
         set: function (scrollMap) {
             this._scrollMap = scrollMap;
-            if (scrollMap) {
-                this._position.next(this.element.scrollLeft + this.element.scrollTop);
-            }
+            this.setInitialPosition();
         },
         enumerable: true,
         configurable: true
     });
+    ScrollHandler.prototype.setInitialPosition = function () {
+        var value;
+        if (this._position == undefined && this.initialPosition) {
+            value = this.initialPosition;
+        }
+        else {
+            value = this.getInstantPosition();
+        }
+        this.instantPosition = value;
+        this._position.next(value);
+    };
+    ScrollHandler.prototype.getInstantPosition = function () {
+        if (this._scrollMap) {
+            return this.element.scrollLeft + this.element.scrollTop;
+        }
+        else {
+            return this.horizontal ? this.element.scrollLeft : this.element.scrollTop;
+        }
+    };
     ScrollHandler.prototype.addTrigger = function (trigger) {
         this.triggers.push({ trigger: trigger, activated: false });
     };
@@ -54,6 +74,7 @@ var ScrollHandler = /** @class */ (function () {
     };
     ScrollHandler.prototype.bind = function () {
         var _this = this;
+        this.subscriptions.push(this.wheelEventReleased.debounceTime(600).subscribe(function () { return _this.handleWheelReleaseEvent(); }));
         this.zone.runOutsideAngular(function () {
             _this.scrollListener = function () {
                 return _this.handleScrollEvent();
@@ -87,6 +108,7 @@ var ScrollHandler = /** @class */ (function () {
         });
     };
     ScrollHandler.prototype.unbind = function () {
+        this.subscriptions.forEach(function (item) { return item.unsubscribe(); });
         if (this.scrollListener) {
             this.viewport.removeEventListener('scroll', this.scrollListener);
         }
@@ -107,12 +129,7 @@ var ScrollHandler = /** @class */ (function () {
         }
     };
     ScrollHandler.prototype.handleScrollEvent = function () {
-        var scrollPosition = this.scrollPosition();
-        this.onScroll(scrollPosition);
-        if (this._position.value != scrollPosition) {
-            this._position.next(scrollPosition);
-        }
-        this.previousScrollPosition = scrollPosition;
+        this.onScroll();
     };
     ScrollHandler.prototype.handleWheelEvent = function (e) {
         if (!this.service.handleAllowed(this) || !this.enabled) {
@@ -121,11 +138,17 @@ var ScrollHandler = /** @class */ (function () {
         }
         e.preventDefault();
         e.stopPropagation();
+        if (this.wheelEventCaptured) {
+            if (this.animatingScroll) {
+                this.wheelEventReleased.next(e);
+            }
+            return;
+        }
         if (this.animatingScroll) {
             return false;
         }
         var deltaX, deltaY;
-        var speed = 4;
+        var speed = 1;
         var DELTA_SCALE = {
             STANDARD: 1,
             OTHERS: -3,
@@ -146,22 +169,18 @@ var ScrollHandler = /** @class */ (function () {
         }
         deltaX *= speed;
         deltaY *= speed;
-        if (navigator.userAgent.indexOf('Mac OS X') != -1) {
-            deltaX /= 4;
-            deltaY /= 4;
-        }
         deltaX = Math.round(deltaX);
         deltaY = Math.round(deltaY);
-        if (this.slides) {
-            this.handleSlideScrollEvent(deltaX, deltaY);
-        }
-        else if (this._scrollMap) {
+        if (this._scrollMap) {
             this.handleScrollMapScrollEvent(deltaX, deltaY);
         }
         else {
             this.handleDefaultScrollEvent(deltaX, deltaY);
         }
         return false;
+    };
+    ScrollHandler.prototype.handleWheelReleaseEvent = function () {
+        this.wheelEventCaptured = false;
     };
     ScrollHandler.prototype.handleTouchStartEvent = function (e) {
         if (!this.service.handleAllowed(this) || !this.enabled) {
@@ -183,17 +202,14 @@ var ScrollHandler = /** @class */ (function () {
         if (this.animatingScroll) {
             return false;
         }
-        var speed = 4;
+        var speed = 1;
         var touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         var deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
         var deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
         if (this.animatingScroll) {
             return false;
         }
-        if (this.slides) {
-            this.handleSlideScrollEvent(deltaX, deltaY);
-        }
-        else if (this._scrollMap) {
+        if (this._scrollMap) {
             this.handleScrollMapScrollEvent(deltaX, deltaY);
         }
         else {
@@ -204,41 +220,13 @@ var ScrollHandler = /** @class */ (function () {
     ScrollHandler.prototype.handleTouchEndEvent = function () {
         this.lastTouch = undefined;
     };
-    ScrollHandler.prototype.handleSlideScrollEvent = function (deltaX, deltaY) {
-        var threshold = navigator.userAgent.indexOf('Mac OS X') != -1 ? 16 : 40;
-        if (this.lastSlideDate && new Date().getTime() - this.lastSlideDate.getTime() < 1000) {
-            if (new Date().getTime() - this.lastSlideScrollDate.getTime() < 200) {
-                this.lastSlideScrollDate = new Date();
-                return;
-            }
-            else {
-                this.lastSlideDate = undefined;
-                this.lastSlideScrollDate = undefined;
-            }
-        }
-        else {
-            this.lastSlideDate = undefined;
-            this.lastSlideScrollDate = undefined;
-        }
-        if (deltaX + deltaY <= 0 - threshold) {
-            this.lastSlideDate = new Date();
-            this.lastSlideScrollDate = new Date();
-            this._slidesObservable.next({ forwardDirection: false });
-        }
-        else if (deltaX + deltaY >= threshold) {
-            this.lastSlideDate = new Date();
-            this.lastSlideScrollDate = new Date();
-            this._slidesObservable.next({ forwardDirection: true });
-        }
-    };
     ScrollHandler.prototype.handleScrollMapScrollEvent = function (deltaX, deltaY) {
         var _this = this;
         var delta = deltaX + deltaY;
         var totalDistance = this._scrollMap
             .map(function (item) { return item.getDistance(_this.viewportSize); })
             .reduce(function (sum, current) { return sum + current; });
-        var position = this.scrollPosition();
-        this.previousScrollPosition = position;
+        var position = this.position;
         position += delta;
         if (position < 0) {
             position = 0;
@@ -250,22 +238,15 @@ var ScrollHandler = /** @class */ (function () {
     };
     ScrollHandler.prototype.handleDefaultScrollEvent = function (deltaX, deltaY) {
         var delta = deltaX + deltaY;
-        if (this.translate) {
-            var params = this.horizontal ? { x: '-=' + delta } : { y: '-=' + delta };
-            this.timeline = this.timeline.clear().to(this.element, 0.3, params);
+        if (this.preventScroll(delta)) {
+            return;
         }
-        else if (navigator.userAgent.indexOf('Mac OS X') != -1) {
-            if (this.horizontal) {
-                this.element.scrollLeft += delta;
-            }
-            else {
-                this.element.scrollTop += delta;
-            }
+        var position = this._position.value;
+        position += delta;
+        if (position < 0) {
+            position = 0;
         }
-        else {
-            var params = this.horizontal ? { scrollLeft: '+=' + delta } : { scrollTop: '+=' + delta };
-            this.timeline = this.timeline.clear().to(this.element, 0.3, params);
-        }
+        this.scrollToBasicPosition(position, 0.16);
     };
     ScrollHandler.prototype.handleResizeEvent = function () {
         this.updateViewportSize();
@@ -273,55 +254,19 @@ var ScrollHandler = /** @class */ (function () {
         this.updateTriggerPositions();
         this.updateScrollMapItems();
     };
-    Object.defineProperty(ScrollHandler.prototype, "slidesObservable", {
-        get: function () {
-            return this._slidesObservable.asObservable();
-        },
-        enumerable: true,
-        configurable: true
-    });
     ScrollHandler.prototype.scrollTo = function (position, duration, ease) {
         var _this = this;
         if (ease === void 0) { ease = undefined; }
-        if (this._scrollMap) {
-            this.scrollToMapPosition(position, duration, ease);
-            return;
-        }
-        var obs = new Subject_1.Subject();
-        var params;
-        if (this.translate) {
-            params = this.horizontal ? {
-                x: 0 - position,
-                onUpdateParams: ['{self}'],
-                onUpdate: function (tween) {
-                    _this._position.next(tween.target._gsTransform.x * (-1));
-                }
-            } : {
-                y: 0 - position,
-                onUpdateParams: ['{self}'],
-                onUpdate: function (tween) {
-                    _this._position.next(tween.target._gsTransform.y * (-1));
-                }
-            };
-        }
-        else {
-            params = this.horizontal ? { scrollLeft: position } : { scrollTop: position };
-        }
-        params.onComplete = function () {
-            _this.animatingScroll = false;
-            obs.next();
-        };
-        if (ease) {
-            params.ease = ease;
-        }
+        var obs;
         this.animatingScroll = true;
-        if (duration) {
-            this.timeline = this.timeline.clear().to(this.element, duration, params);
+        if (this._scrollMap) {
+            obs = this.scrollToMapPosition(position, duration, ease);
         }
         else {
-            this.timeline = this.timeline.clear().set(this.element, params);
+            obs = this.scrollToBasicPosition(position, duration, ease);
         }
-        return obs.asObservable();
+        obs.subscribe(function () { return _this.animatingScroll = false; });
+        return obs;
     };
     ScrollHandler.prototype.scrollToMapPosition = function (position, duration, ease) {
         var _this = this;
@@ -345,9 +290,14 @@ var ScrollHandler = /** @class */ (function () {
             scrollLeft: mapPosition.x,
             scrollTop: mapPosition.y
         };
+        var obs = new Subject_1.Subject();
         if (ease) {
             params['ease'] = ease;
         }
+        params['onComplete'] = function () {
+            obs.next();
+        };
+        this.previousScrollPosition = this.position;
         if (this._position.value != position) {
             this._position.next(position);
         }
@@ -356,21 +306,53 @@ var ScrollHandler = /** @class */ (function () {
             || this._scrollMapPosition.value.y !== mapPosition.y) {
             this._scrollMapPosition.next(mapPosition);
         }
-        this.timeline = this.timeline.clear().to(this.element, duration, params);
-    };
-    ScrollHandler.prototype.scrollPosition = function () {
-        if (this.translate) {
-            return this._position.value;
-        }
-        else if (this._scrollMap) {
-            return this._position.value;
-        }
-        else if (this.horizontal) {
-            return this.element.scrollLeft;
+        if (duration) {
+            this.timeline = this.timeline.clear().to(this.element, duration, params);
         }
         else {
-            return this.element.scrollTop;
+            this.timeline = this.timeline.clear().set(this.element, params);
         }
+        return obs;
+    };
+    ScrollHandler.prototype.scrollToBasicPosition = function (position, duration, ease) {
+        var _this = this;
+        if (ease === void 0) { ease = undefined; }
+        this.previousScrollPosition = this.position;
+        if (position != this._position.value) {
+            this._position.next(position);
+        }
+        var params;
+        var obs = new Subject_1.Subject();
+        if (this.translate) {
+            params = this.horizontal ? { x: position } : { y: position };
+        }
+        else {
+            params = this.horizontal ? { scrollLeft: position } : { scrollTop: position };
+        }
+        if (ease) {
+            params['ease'] = ease;
+        }
+        params['onComplete'] = function () {
+            obs.next();
+            _this.animatingScroll = false; // workaround
+        };
+        if (duration) {
+            this.timeline = this.timeline.clear().to(this.element, duration, params);
+        }
+        else {
+            this.timeline = this.timeline.clear().set(this.element, params);
+        }
+        obs.subscribe(function () {
+            position = _this._position.value;
+            if (position > _this.getInstantPosition()) {
+                _this.updateContentSize();
+            }
+            position = _this.normalizePosition(position);
+            if (position != _this._position.value) {
+                _this._position.next(position);
+            }
+        });
+        return obs;
     };
     Object.defineProperty(ScrollHandler.prototype, "viewportSize", {
         get: function () {
@@ -407,7 +389,7 @@ var ScrollHandler = /** @class */ (function () {
     ScrollHandler.prototype.updateTriggerPositions = function () {
         var changes = this.triggers.map(function (trigger) { return trigger.trigger.updatePosition(); });
         if (changes.filter(function (item) { return item; }).length) {
-            this.onScroll(this.scrollPosition());
+            this.onScroll();
         }
     };
     ScrollHandler.prototype.updateScrollMapItems = function () {
@@ -416,9 +398,16 @@ var ScrollHandler = /** @class */ (function () {
         }
         this._scrollMap.forEach(function (item) { return item.onLayoutUpdated(); });
     };
-    Object.defineProperty(ScrollHandler.prototype, "position", {
+    Object.defineProperty(ScrollHandler.prototype, "position$", {
         get: function () {
             return this._position.asObservable();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ScrollHandler.prototype, "position", {
+        get: function () {
+            return this._position.value;
         },
         enumerable: true,
         configurable: true
@@ -430,6 +419,18 @@ var ScrollHandler = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    ScrollHandler.prototype.normalizePosition = function (position) {
+        if (position < 0) {
+            position = 0;
+        }
+        else if (this.horizontal && position > this.contentSize.width - this.viewportSize.width) {
+            position = this.contentSize.width - this.viewportSize.width;
+        }
+        else if (!this.horizontal && position > this.contentSize.height - this.viewportSize.height) {
+            position = this.contentSize.height - this.viewportSize.height;
+        }
+        return position;
+    };
     Object.defineProperty(ScrollHandler.prototype, "scrollMapItemPositions", {
         get: function () {
             var _this = this;
@@ -448,37 +449,80 @@ var ScrollHandler = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    ScrollHandler.prototype.onScroll = function (position) {
+    ScrollHandler.prototype.preventScroll = function (delta) {
         var scrollMapItems = this._scrollMap ? this.scrollMapItemPositions : undefined;
+        var direction = delta != 0 ? delta / Math.abs(delta) : 0;
+        var stickTo;
         var _loop_1 = function (trigger) {
             var triggerPosition = trigger.trigger.position;
+            var triggerDelta = triggerPosition - this_1.position;
+            var triggerDirection = triggerDelta != 0 ? triggerDelta / Math.abs(triggerDelta) : 0;
             if (this_1._scrollMap) {
                 var scrollMapItem = _.first(scrollMapItems.filter(function (item) { return item.item === trigger.trigger.scrollMapItem; }));
                 if (scrollMapItem) {
                     triggerPosition += scrollMapItem.startPosition;
                 }
             }
-            if (position >= triggerPosition && !trigger.activated) {
-                trigger.activated = true;
-                trigger.trigger.onActivated({
-                    triggerPosition: triggerPosition,
-                    previousScrollPosition: this_1.previousScrollPosition,
-                    scrollPosition: position
-                });
-            }
-            else if (position < triggerPosition && trigger.activated) {
-                trigger.activated = false;
-                trigger.trigger.onDeactivated({
-                    triggerPosition: triggerPosition,
-                    previousScrollPosition: this_1.previousScrollPosition,
-                    scrollPosition: position
-                });
+            if (trigger.trigger.stick != undefined
+                && triggerDirection == direction
+                && this_1.previousStickTo != trigger.trigger
+                && Math.abs(triggerPosition - this_1.position) <= this_1.viewportSize.width + trigger.trigger.stick
+                && (!stickTo || Math.abs(stickTo.position - this_1.position) > Math.abs(triggerDelta))) {
+                stickTo = trigger.trigger;
             }
         };
         var this_1 = this;
         for (var _i = 0, _a = this.triggers; _i < _a.length; _i++) {
             var trigger = _a[_i];
             _loop_1(trigger);
+        }
+        if (stickTo) {
+            this.previousStickTo = stickTo;
+            this.wheelEventCaptured = true;
+            this.wheelEventReleased.next();
+            this.scrollTo(stickTo.position, 0.9);
+            return true;
+        }
+        return false;
+    };
+    ScrollHandler.prototype.onScroll = function () {
+        var scrollMapItems = this._scrollMap ? this.scrollMapItemPositions : undefined;
+        var triggered = false;
+        this.instantPosition = this.getInstantPosition();
+        var _loop_2 = function (trigger) {
+            var triggerPosition = trigger.trigger.position;
+            if (this_2._scrollMap) {
+                var scrollMapItem = _.first(scrollMapItems.filter(function (item) { return item.item === trigger.trigger.scrollMapItem; }));
+                if (scrollMapItem) {
+                    triggerPosition += scrollMapItem.startPosition;
+                }
+            }
+            if (this_2.position >= triggerPosition && !trigger.activated) {
+                trigger.activated = true;
+                trigger.trigger.onActivated({
+                    triggerPosition: triggerPosition,
+                    previousScrollPosition: this_2.previousScrollPosition,
+                    scrollPosition: this_2.position
+                });
+                triggered = true;
+            }
+            else if (this_2.position < triggerPosition && trigger.activated) {
+                trigger.activated = false;
+                trigger.trigger.onDeactivated({
+                    triggerPosition: triggerPosition,
+                    previousScrollPosition: this_2.previousScrollPosition,
+                    scrollPosition: this_2.position
+                });
+                triggered = true;
+            }
+        };
+        var this_2 = this;
+        for (var _i = 0, _a = this.triggers; _i < _a.length; _i++) {
+            var trigger = _a[_i];
+            _loop_2(trigger);
+        }
+        if (triggered) {
+            this.updateContentSize();
         }
     };
     return ScrollHandler;

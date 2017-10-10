@@ -2,12 +2,12 @@ import { NgZone } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Subscription } from 'rxjs/Subscription';
 import { ScrollService } from '../services/scroll.service';
 import { ScrollTriggerDirective } from '../directives/scroll-trigger/scroll-trigger.directive';
 import { ScrollMapItem } from './scroll-map-item';
 export declare type ScrollHandlerOptions = {
     horizontal?: boolean;
-    slides?: boolean;
     translate?: boolean;
     initialPosition?: number;
     viewport?: any;
@@ -20,17 +20,11 @@ export declare class ScrollHandler {
     private zone;
     enabled: boolean;
     horizontal: boolean;
-    slides: boolean;
-    _slidesObservable: Subject<{
-        forwardDirection: boolean;
-    }>;
     translate: boolean;
     initialPosition: number;
     viewport: any;
     overrideScroll: boolean;
     _scrollMap: ScrollMapItem[];
-    lastSlideDate: Date;
-    lastSlideScrollDate: Date;
     timeline: any;
     scrollListener: any;
     mouseWheelListener: any;
@@ -39,6 +33,7 @@ export declare class ScrollHandler {
     touchEndListener: any;
     resizeListener: any;
     animatingScroll: boolean;
+    instantPosition: number;
     _position: BehaviorSubject<number>;
     _scrollMapPosition: BehaviorSubject<{
         x: number;
@@ -52,8 +47,14 @@ export declare class ScrollHandler {
         activated: boolean;
     }[];
     previousScrollPosition: number;
+    previousStickTo: ScrollTriggerDirective;
+    subscriptions: Subscription[];
+    wheelEventReleased: Subject<any>;
+    wheelEventCaptured: boolean;
     constructor(service: ScrollService, element: HTMLElement, zone: NgZone, options: ScrollHandlerOptions);
     scrollMap: any;
+    setInitialPosition(): void;
+    getInstantPosition(): number;
     addTrigger(trigger: any): void;
     removeTrigger(trigger: any): void;
     enable(): void;
@@ -62,34 +63,34 @@ export declare class ScrollHandler {
     unbind(): void;
     handleScrollEvent(): void;
     handleWheelEvent(e: any): boolean;
+    handleWheelReleaseEvent(): void;
     handleTouchStartEvent(e: any): boolean;
     handleTouchMoveEvent(e: any): boolean;
     handleTouchEndEvent(): void;
-    handleSlideScrollEvent(deltaX: any, deltaY: any): void;
     handleScrollMapScrollEvent(deltaX: any, deltaY: any): void;
     handleDefaultScrollEvent(deltaX: any, deltaY: any): void;
     handleResizeEvent(): void;
-    readonly slidesObservable: Observable<{
-        forwardDirection: boolean;
-    }>;
     scrollTo(position: any, duration: any, ease?: any): Observable<{}>;
-    scrollToMapPosition(position: any, duration: any, ease?: any): void;
-    scrollPosition(): number;
+    scrollToMapPosition(position: any, duration: any, ease?: any): Observable<{}>;
+    scrollToBasicPosition(position: any, duration: any, ease?: any): Observable<{}>;
     readonly viewportSize: any;
     updateViewportSize(): void;
     readonly contentSize: any;
     updateContentSize(): void;
     updateTriggerPositions(): void;
     updateScrollMapItems(): void;
-    readonly position: Observable<number>;
+    readonly position$: Observable<number>;
+    readonly position: number;
     readonly scrollMapPosition: Observable<{
         x: number;
         y: number;
     }>;
+    normalizePosition(position: any): any;
     readonly scrollMapItemPositions: {
         startPosition: number;
         endPosition: number;
         item: ScrollMapItem;
     }[];
-    onScroll(position: any): void;
+    preventScroll(delta: any): boolean;
+    onScroll(): void;
 }
