@@ -74,12 +74,22 @@ export class ScrollHandler {
   }
 
   setInitialPosition() {
+    let value;
+
     if (this._position == undefined && this.initialPosition) {
-      this._position.next(this.initialPosition);
-    } else if (this._scrollMap) {
-      this._position.next(this.element.scrollLeft + this.element.scrollTop);
+      value = this.initialPosition;
     } else {
-      this._position.next(this.horizontal ? this.element.scrollLeft : this.element.scrollTop);
+      value = this.getInstancePosition();
+    }
+
+    this._position.next(value);
+  }
+
+  getInstancePosition(): number {
+    if (this._scrollMap) {
+      return this.element.scrollLeft + this.element.scrollTop;
+    } else {
+      return this.horizontal ? this.element.scrollLeft : this.element.scrollTop;
     }
   }
 
