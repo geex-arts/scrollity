@@ -29,7 +29,9 @@ export class ScrollService {
   removeScrollHandler(owner) {
     let documentScrollHandler = _.last(this.handlers.filter(item => item.owner === owner));
 
-    documentScrollHandler.handler.unbind();
+    if (documentScrollHandler) {
+      documentScrollHandler.handler.unbind();
+    }
 
     this.handlers = this.handlers.filter(item => item !== documentScrollHandler);
   }

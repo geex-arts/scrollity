@@ -20,6 +20,7 @@ var ScrollTriggerDirective = /** @class */ (function () {
                 this.screenTrigger = undefined;
                 this.offset = undefined;
                 this.scrollMapItem = undefined;
+                this.stick = undefined;
             }
             return;
         }
@@ -31,11 +32,14 @@ var ScrollTriggerDirective = /** @class */ (function () {
         this.screenTrigger = options.screenTrigger != undefined ? options.screenTrigger : 0.5;
         this.offset = options.offset != undefined ? options.offset : 0;
         this.scrollMapItem = options.scrollMapItem;
+        this.stick = options.stick;
         this.updatePosition();
         this.options.handler.addTrigger(this);
     };
     ScrollTriggerDirective.prototype.ngOnDestroy = function () {
-        this.options.handler.removeTrigger(this);
+        if (this.options.handler) {
+            this.options.handler.removeTrigger(this);
+        }
     };
     ScrollTriggerDirective.prototype.updatePosition = function () {
         if (!this.handler) {

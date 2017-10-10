@@ -11,7 +11,8 @@ export type ScrollTriggerOptions = {
   elementTrigger?: number,
   screenTrigger?: number,
   offset?: number,
-  scrollMapItem?: ScrollMapItem
+  scrollMapItem?: ScrollMapItem,
+  stick?: number,
 };
 
 export type ScrollTriggerEvent = {
@@ -33,6 +34,7 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
   screenTrigger: number;
   offset: number;
   scrollMapItem: ScrollMapItem;
+  stick: number;
   private _position: number;
 
   constructor(private el: ElementRef, private documentService: DocumentService) { }
@@ -48,6 +50,7 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
         this.screenTrigger = undefined;
         this.offset = undefined;
         this.scrollMapItem = undefined;
+        this.stick = undefined;
       }
 
       return;
@@ -62,13 +65,16 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
     this.screenTrigger = options.screenTrigger != undefined ? options.screenTrigger : 0.5;
     this.offset = options.offset != undefined ? options.offset : 0;
     this.scrollMapItem = options.scrollMapItem;
+    this.stick = options.stick;
 
     this.updatePosition();
     this.options.handler.addTrigger(this);
   }
 
   ngOnDestroy(): void {
-    this.options.handler.removeTrigger(this);
+    if (this.options.handler) {
+      this.options.handler.removeTrigger(this);
+    }
   }
 
   updatePosition(): boolean {

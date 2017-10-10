@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var core_1 = require("@angular/core");
 var common_1 = require("@angular/common");
+require("rxjs/Rx");
 window['_gsQueue'] = window['_gsDefine'] = null;
 window['GreenSockGlobals'] = {};
 var scroll_service_1 = require("./services/scroll.service");

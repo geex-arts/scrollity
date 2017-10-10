@@ -8,6 +8,7 @@ export declare type ScrollTriggerOptions = {
     screenTrigger?: number;
     offset?: number;
     scrollMapItem?: ScrollMapItem;
+    stick?: number;
 };
 export declare type ScrollTriggerEvent = {
     triggerPosition: number;
@@ -26,6 +27,7 @@ export declare class ScrollTriggerDirective implements OnChanges, OnDestroy {
     screenTrigger: number;
     offset: number;
     scrollMapItem: ScrollMapItem;
+    stick: number;
     private _position;
     constructor(el: ElementRef, documentService: DocumentService);
     ngOnChanges(changes: SimpleChanges): void;

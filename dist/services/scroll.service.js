@@ -17,7 +17,9 @@ var ScrollService = /** @class */ (function () {
     };
     ScrollService.prototype.removeScrollHandler = function (owner) {
         var documentScrollHandler = _.last(this.handlers.filter(function (item) { return item.owner === owner; }));
-        documentScrollHandler.handler.unbind();
+        if (documentScrollHandler) {
+            documentScrollHandler.handler.unbind();
+        }
         this.handlers = this.handlers.filter(function (item) { return item !== documentScrollHandler; });
     };
     ScrollService.prototype.handleAllowed = function (handler) {

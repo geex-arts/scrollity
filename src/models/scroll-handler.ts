@@ -3,6 +3,7 @@ import { TimelineMax } from 'gsap';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Subscription } from 'rxjs/Subscription';
 
 import { ScrollService } from '../services/scroll.service';
 import { ScrollTriggerDirective } from '../directives/scroll-trigger/scroll-trigger.directive';
@@ -11,7 +12,6 @@ import * as _ from 'lodash';
 
 export type ScrollHandlerOptions = {
   horizontal?: boolean,
-  slides?: boolean,
   translate?: boolean,
   initialPosition?: number,
   viewport?: any,
@@ -23,15 +23,11 @@ export class ScrollHandler {
 
   enabled = true;
   horizontal: boolean;
-  slides: boolean;
-  _slidesObservable = new Subject<{ forwardDirection: boolean }>();
   translate: boolean;
   initialPosition: number;
   viewport: any;
   overrideScroll: boolean;
   _scrollMap: ScrollMapItem[];
-  lastSlideDate: Date;
-  lastSlideScrollDate: Date;
   timeline = new TimelineMax();
   scrollListener: any;
   mouseWheelListener: any;
@@ -40,6 +36,7 @@ export class ScrollHandler {
   touchEndListener: any;
   resizeListener: any;
   animatingScroll = false;
+  instantPosition = 0;
   _position = new BehaviorSubject<number>(0);
   _scrollMapPosition = new BehaviorSubject<{ x: number, y: number }>(undefined);
   _viewportSize;
@@ -47,13 +44,16 @@ export class ScrollHandler {
   lastTouch;
   triggers: { trigger: ScrollTriggerDirective, activated: boolean }[] = [];
   previousScrollPosition = 0;
+  previousStickTo: ScrollTriggerDirective;
+  subscriptions: Subscription[] = [];
+  wheelEventReleased = new Subject<any>();
+  wheelEventCaptured = false;
 
   constructor(private service: ScrollService,
               public element: HTMLElement,
               private zone: NgZone,
               options: ScrollHandlerOptions) {
     this.horizontal = options.horizontal || false;
-    this.slides = options.slides || false;
     this.translate = options.translate || false;
     this.initialPosition = options.initialPosition || 0;
     this.viewport = options.viewport || element;
@@ -64,15 +64,34 @@ export class ScrollHandler {
       this.scrollTo(this.initialPosition, 0);
     }
 
+    this.setInitialPosition();
     this.updateViewportSize();
     this.updateContentSize();
   }
 
   set scrollMap(scrollMap) {
     this._scrollMap = scrollMap;
+    this.setInitialPosition();
+  }
 
-    if (scrollMap) {
-      this._position.next(this.element.scrollLeft + this.element.scrollTop);
+  setInitialPosition() {
+    let value;
+
+    if (this._position == undefined && this.initialPosition) {
+      value = this.initialPosition;
+    } else {
+      value = this.getInstantPosition();
+    }
+
+    this.instantPosition = value;
+    this._position.next(value);
+  }
+
+  getInstantPosition(): number {
+    if (this._scrollMap) {
+      return this.element.scrollLeft + this.element.scrollTop;
+    } else {
+      return this.horizontal ? this.element.scrollLeft : this.element.scrollTop;
     }
   }
 
@@ -93,6 +112,8 @@ export class ScrollHandler {
   }
 
   bind() {
+    this.subscriptions.push(this.wheelEventReleased.debounceTime(600).subscribe(() => this.handleWheelReleaseEvent()));
+
     this.zone.runOutsideAngular(() => {
       this.scrollListener = () => {
         return this.handleScrollEvent();
@@ -135,6 +156,8 @@ export class ScrollHandler {
   }
 
   unbind() {
+    this.subscriptions.forEach(item => item.unsubscribe());
+
     if (this.scrollListener) {
       this.viewport.removeEventListener('scroll', this.scrollListener);
     }
@@ -161,15 +184,7 @@ export class ScrollHandler {
   }
 
   handleScrollEvent() {
-    let scrollPosition = this.scrollPosition();
-
-    this.onScroll(scrollPosition);
-
-    if (this._position.value != scrollPosition) {
-      this._position.next(scrollPosition);
-    }
-
-    this.previousScrollPosition = scrollPosition;
+    this.onScroll();
   }
 
   handleWheelEvent(e) {
@@ -181,12 +196,20 @@ export class ScrollHandler {
     e.preventDefault();
     e.stopPropagation();
 
+    if (this.wheelEventCaptured) {
+      if (this.animatingScroll) {
+        this.wheelEventReleased.next(e);
+      }
+
+      return;
+    }
+
     if (this.animatingScroll) {
       return false;
     }
 
     let deltaX, deltaY;
-    const speed = 4;
+    const speed = 1;
     const DELTA_SCALE = {
       STANDARD: 1,
       OTHERS: -3,
@@ -209,23 +232,20 @@ export class ScrollHandler {
     deltaX *= speed;
     deltaY *= speed;
 
-    if (navigator.userAgent.indexOf('Mac OS X') != -1) {
-      deltaX /= 4;
-      deltaY /= 4;
-    }
-
     deltaX = Math.round(deltaX);
     deltaY = Math.round(deltaY);
 
-    if (this.slides) {
-      this.handleSlideScrollEvent(deltaX, deltaY);
-    } else if (this._scrollMap) {
+    if (this._scrollMap) {
       this.handleScrollMapScrollEvent(deltaX, deltaY);
     } else {
       this.handleDefaultScrollEvent(deltaX, deltaY);
     }
 
     return false;
+  }
+
+  handleWheelReleaseEvent() {
+    this.wheelEventCaptured = false;
   }
 
   handleTouchStartEvent(e) {
@@ -256,7 +276,7 @@ export class ScrollHandler {
       return false;
     }
 
-    const speed = 4;
+    const speed = 1;
     const touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
     const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
@@ -265,9 +285,7 @@ export class ScrollHandler {
       return false;
     }
 
-    if (this.slides) {
-      this.handleSlideScrollEvent(deltaX, deltaY);
-    } else if (this._scrollMap) {
+    if (this._scrollMap) {
       this.handleScrollMapScrollEvent(deltaX, deltaY);
     } else {
       this.handleDefaultScrollEvent(deltaX, deltaY);
@@ -280,35 +298,6 @@ export class ScrollHandler {
     this.lastTouch = undefined;
   }
 
-  handleSlideScrollEvent(deltaX, deltaY) {
-    const threshold = navigator.userAgent.indexOf('Mac OS X') != -1 ? 16 : 40;
-
-    if (this.lastSlideDate && new Date().getTime() - this.lastSlideDate.getTime() < 1000) {
-      if (new Date().getTime() - this.lastSlideScrollDate.getTime() < 200) {
-        this.lastSlideScrollDate = new Date();
-        return;
-      } else {
-        this.lastSlideDate = undefined;
-        this.lastSlideScrollDate = undefined;
-      }
-    } else {
-      this.lastSlideDate = undefined;
-      this.lastSlideScrollDate = undefined;
-    }
-
-    if (deltaX + deltaY <= 0 - threshold) {
-      this.lastSlideDate = new Date();
-      this.lastSlideScrollDate = new Date();
-
-      this._slidesObservable.next({ forwardDirection: false });
-    } else if (deltaX + deltaY >= threshold) {
-      this.lastSlideDate = new Date();
-      this.lastSlideScrollDate = new Date();
-
-      this._slidesObservable.next({ forwardDirection: true });
-    }
-  }
-
   handleScrollMapScrollEvent(deltaX, deltaY) {
     let delta = deltaX + deltaY;
 
@@ -316,9 +305,7 @@ export class ScrollHandler {
       .map(item => item.getDistance(this.viewportSize))
       .reduce((sum, current) => sum + current);
 
-    let position = this.scrollPosition();
-
-    this.previousScrollPosition = position;
+    let position = this.position;
 
     position += delta;
 
@@ -334,21 +321,19 @@ export class ScrollHandler {
   handleDefaultScrollEvent(deltaX, deltaY) {
     let delta = deltaX + deltaY;
 
-    if (this.translate) {
-      let params = this.horizontal ? { x: '-=' + delta } : { y: '-=' + delta };
-
-      this.timeline = this.timeline.clear().to(this.element, 0.3, params);
-    } else if (navigator.userAgent.indexOf('Mac OS X') != -1) {
-      if (this.horizontal) {
-        this.element.scrollLeft += delta;
-      } else {
-        this.element.scrollTop += delta;
-      }
-    } else {
-      let params = this.horizontal ? { scrollLeft: '+=' + delta } : { scrollTop: '+=' + delta };
-
-      this.timeline = this.timeline.clear().to(this.element, 0.3, params);
+    if (this.preventScroll(delta)) {
+      return;
     }
+
+    let position = this._position.value;
+
+    position += delta;
+
+    if (position < 0) {
+      position = 0;
+    }
+
+    this.scrollToBasicPosition(position, 0.16);
   }
 
   handleResizeEvent() {
@@ -358,58 +343,22 @@ export class ScrollHandler {
     this.updateScrollMapItems();
   }
 
-  get slidesObservable(): Observable<{ forwardDirection: boolean }> {
-    return this._slidesObservable.asObservable();
-  }
-
   scrollTo(position, duration, ease = undefined): Observable<{}> {
-    if (this._scrollMap) {
-      this.scrollToMapPosition(position, duration, ease);
-      return;
-    }
-
-    let obs = new Subject();
-    let params;
-
-    if (this.translate) {
-      params = this.horizontal ? {
-        x: 0 - position,
-        onUpdateParams: ['{self}'],
-        onUpdate: tween => {
-          this._position.next(tween.target._gsTransform.x * (-1));
-        }
-      } : {
-        y: 0 - position,
-        onUpdateParams: ['{self}'],
-        onUpdate: tween => {
-          this._position.next(tween.target._gsTransform.y * (-1));
-        }
-      };
-    } else {
-      params = this.horizontal ? { scrollLeft: position } : { scrollTop: position };
-    }
-
-    params.onComplete = () => {
-      this.animatingScroll = false;
-      obs.next();
-    };
-
-    if (ease) {
-      params.ease = ease;
-    }
-
+    let obs: Observable<{}>;
     this.animatingScroll = true;
 
-    if (duration) {
-      this.timeline = this.timeline.clear().to(this.element, duration, params);
+    if (this._scrollMap) {
+      obs = this.scrollToMapPosition(position, duration, ease);
     } else {
-      this.timeline = this.timeline.clear().set(this.element, params);
+      obs = this.scrollToBasicPosition(position, duration, ease);
     }
 
-    return obs.asObservable();
+    obs.subscribe(() => this.animatingScroll = false);
+
+    return obs;
   }
 
-  scrollToMapPosition(position, duration, ease = undefined) {
+  scrollToMapPosition(position, duration, ease = undefined): Observable<{}> {
     let mapDistance = 0;
     let mapPosition = { x: 0, y: 0 };
 
@@ -434,10 +383,17 @@ export class ScrollHandler {
       scrollLeft: mapPosition.x,
       scrollTop: mapPosition.y
     };
+    let obs = new Subject();
 
     if (ease) {
       params['ease'] = ease;
     }
+
+    params['onComplete'] = () => {
+      obs.next();
+    };
+
+    this.previousScrollPosition = this.position;
 
     if (this._position.value != position) {
       this._position.next(position);
@@ -449,19 +405,61 @@ export class ScrollHandler {
       this._scrollMapPosition.next(mapPosition);
     }
 
-    this.timeline = this.timeline.clear().to(this.element, duration, params);
+    if (duration) {
+      this.timeline = this.timeline.clear().to(this.element, duration, params);
+    } else {
+      this.timeline = this.timeline.clear().set(this.element, params);
+    }
+
+    return obs;
   }
 
-  scrollPosition(): number {
-    if (this.translate) {
-      return this._position.value;
-    } else if (this._scrollMap) {
-      return this._position.value;
-    } else if (this.horizontal) {
-      return this.element.scrollLeft;
-    } else {
-      return this.element.scrollTop;
+  scrollToBasicPosition(position, duration, ease = undefined): Observable<{}> {
+    this.previousScrollPosition = this.position;
+
+    if (position != this._position.value) {
+      this._position.next(position);
     }
+
+    let params;
+    let obs = new Subject();
+
+    if (this.translate) {
+      params = this.horizontal ? { x: position } : { y: position };
+    } else {
+      params = this.horizontal ? { scrollLeft: position } : { scrollTop: position };
+    }
+
+    if (ease) {
+      params['ease'] = ease;
+    }
+
+    params['onComplete'] = () => {
+      obs.next();
+      this.animatingScroll = false; // workaround
+    };
+
+    if (duration) {
+      this.timeline = this.timeline.clear().to(this.element, duration, params);
+    } else {
+      this.timeline = this.timeline.clear().set(this.element, params);
+    }
+
+    obs.subscribe(() => {
+      position = this._position.value;
+
+      if (position > this.getInstantPosition()) {
+        this.updateContentSize();
+      }
+
+      position = this.normalizePosition(position);
+
+      if (position != this._position.value) {
+        this._position.next(position);
+      }
+    });
+
+    return obs;
   }
 
   get viewportSize() {
@@ -496,7 +494,7 @@ export class ScrollHandler {
     const changes = this.triggers.map(trigger => trigger.trigger.updatePosition());
 
     if (changes.filter(item => item).length) {
-      this.onScroll(this.scrollPosition());
+      this.onScroll();
     }
   }
 
@@ -507,12 +505,28 @@ export class ScrollHandler {
     this._scrollMap.forEach(item => item.onLayoutUpdated());
   }
 
-  get position(): Observable<number> {
+  get position$(): Observable<number> {
     return this._position.asObservable();
+  }
+
+  get position() {
+    return this._position.value;
   }
 
   get scrollMapPosition(): Observable<{ x: number, y: number }> {
     return this._scrollMapPosition.asObservable();
+  }
+
+  normalizePosition(position) {
+    if (position < 0) {
+      position = 0;
+    } else if (this.horizontal && position > this.contentSize.width - this.viewportSize.width) {
+      position = this.contentSize.width - this.viewportSize.width;
+    } else if (!this.horizontal && position > this.contentSize.height - this.viewportSize.height) {
+      position = this.contentSize.height - this.viewportSize.height;
+    }
+
+    return position;
   }
 
   get scrollMapItemPositions() {
@@ -529,8 +543,49 @@ export class ScrollHandler {
     });
   }
 
-  onScroll(position) {
+  preventScroll(delta): boolean {
     const scrollMapItems = this._scrollMap ? this.scrollMapItemPositions : undefined;
+    const direction = delta != 0 ? delta / Math.abs(delta) : 0;
+    let stickTo: ScrollTriggerDirective;
+
+    for (let trigger of this.triggers) {
+      let triggerPosition = trigger.trigger.position;
+      const triggerDelta = triggerPosition - this.position;
+      const triggerDirection = triggerDelta != 0 ? triggerDelta / Math.abs(triggerDelta) : 0;
+
+      if (this._scrollMap) {
+        const scrollMapItem = _.first(scrollMapItems.filter(item => item.item === trigger.trigger.scrollMapItem));
+
+        if (scrollMapItem) {
+          triggerPosition += scrollMapItem.startPosition;
+        }
+      }
+
+      if (trigger.trigger.stick != undefined
+          && triggerDirection == direction
+          && this.previousStickTo != trigger.trigger
+          && Math.abs(triggerPosition - this.position) <= this.viewportSize.width + trigger.trigger.stick
+          && (!stickTo || Math.abs(stickTo.position - this.position) > Math.abs(triggerDelta))) {
+        stickTo = trigger.trigger;
+      }
+    }
+
+    if (stickTo) {
+      this.previousStickTo = stickTo;
+      this.wheelEventCaptured = true;
+      this.wheelEventReleased.next();
+      this.scrollTo(stickTo.position, 0.9);
+      return true;
+    }
+
+    return false;
+  }
+
+  onScroll() {
+    const scrollMapItems = this._scrollMap ? this.scrollMapItemPositions : undefined;
+    let triggered = false;
+
+    this.instantPosition = this.getInstantPosition();
 
     for (let trigger of this.triggers) {
       let triggerPosition = trigger.trigger.position;
@@ -543,21 +598,27 @@ export class ScrollHandler {
         }
       }
 
-      if (position >= triggerPosition && !trigger.activated) {
+      if (this.position >= triggerPosition && !trigger.activated) {
         trigger.activated = true;
         trigger.trigger.onActivated({
           triggerPosition: triggerPosition,
           previousScrollPosition: this.previousScrollPosition,
-          scrollPosition: position
+          scrollPosition: this.position
         });
-      } else if (position < triggerPosition && trigger.activated) {
+        triggered = true;
+      } else if (this.position < triggerPosition && trigger.activated) {
         trigger.activated = false;
         trigger.trigger.onDeactivated({
           triggerPosition: triggerPosition,
           previousScrollPosition: this.previousScrollPosition,
-          scrollPosition: position
+          scrollPosition: this.position
         });
+        triggered = true;
       }
+    }
+
+    if (triggered) {
+      this.updateContentSize();
     }
   }
 }
