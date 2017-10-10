@@ -36,6 +36,7 @@ export class ScrollHandler {
   touchEndListener: any;
   resizeListener: any;
   animatingScroll = false;
+  instantPosition = 0;
   _position = new BehaviorSubject<number>(0);
   _scrollMapPosition = new BehaviorSubject<{ x: number, y: number }>(undefined);
   _viewportSize;
@@ -66,8 +67,6 @@ export class ScrollHandler {
     this.setInitialPosition();
     this.updateViewportSize();
     this.updateContentSize();
-
-    setInterval(() => this.updateContentSize(), 1000);
   }
 
   set scrollMap(scrollMap) {
@@ -81,13 +80,14 @@ export class ScrollHandler {
     if (this._position == undefined && this.initialPosition) {
       value = this.initialPosition;
     } else {
-      value = this.getInstancePosition();
+      value = this.getInstantPosition();
     }
 
+    this.instantPosition = value;
     this._position.next(value);
   }
 
-  getInstancePosition(): number {
+  getInstantPosition(): number {
     if (this._scrollMap) {
       return this.element.scrollLeft + this.element.scrollTop;
     } else {
@@ -331,10 +331,6 @@ export class ScrollHandler {
 
     if (position < 0) {
       position = 0;
-    } else if (this.horizontal && position > this.contentSize.width - this.viewportSize.width) {
-      position = this.contentSize.width - this.viewportSize.width;
-    } else if (!this.horizontal && position > this.contentSize.height - this.viewportSize.height) {
-      position = this.contentSize.height - this.viewportSize.height;
     }
 
     this.scrollToBasicPosition(position, 0.16);
@@ -449,6 +445,20 @@ export class ScrollHandler {
       this.timeline = this.timeline.clear().set(this.element, params);
     }
 
+    obs.subscribe(() => {
+      position = this._position.value;
+
+      if (position > this.getInstantPosition()) {
+        this.updateContentSize();
+      }
+
+      position = this.normalizePosition(position);
+
+      if (position != this._position.value) {
+        this._position.next(position);
+      }
+    });
+
     return obs;
   }
 
@@ -507,6 +517,18 @@ export class ScrollHandler {
     return this._scrollMapPosition.asObservable();
   }
 
+  normalizePosition(position) {
+    if (position < 0) {
+      position = 0;
+    } else if (this.horizontal && position > this.contentSize.width - this.viewportSize.width) {
+      position = this.contentSize.width - this.viewportSize.width;
+    } else if (!this.horizontal && position > this.contentSize.height - this.viewportSize.height) {
+      position = this.contentSize.height - this.viewportSize.height;
+    }
+
+    return position;
+  }
+
   get scrollMapItemPositions() {
     let sum = 0;
     return this._scrollMap.map(item => {
@@ -562,6 +584,8 @@ export class ScrollHandler {
   onScroll() {
     const scrollMapItems = this._scrollMap ? this.scrollMapItemPositions : undefined;
     let triggered = false;
+
+    this.instantPosition = this.getInstantPosition();
 
     for (let trigger of this.triggers) {
       let triggerPosition = trigger.trigger.position;
