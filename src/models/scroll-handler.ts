@@ -66,6 +66,8 @@ export class ScrollHandler {
     this.setInitialPosition();
     this.updateViewportSize();
     this.updateContentSize();
+
+    setInterval(() => this.updateContentSize(), 1000);
   }
 
   set scrollMap(scrollMap) {
