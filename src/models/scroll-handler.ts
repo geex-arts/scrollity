@@ -287,9 +287,9 @@ export class ScrollHandler {
       const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
 
       if (this._scrollMap) {
-        this.handleScrollMapScrollEvent(deltaX, deltaY, 0.1);
+        this.handleScrollMapScrollEvent(deltaX, deltaY, 0);
       } else {
-        this.handleDefaultScrollEvent(deltaX, deltaY, 0.16);
+        this.handleDefaultScrollEvent(deltaX, deltaY, 0);
       }
 
       this.touchMoves.push({
