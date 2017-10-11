@@ -9,6 +9,9 @@ import { ScrollService } from '../services/scroll.service';
 import { ScrollTriggerDirective } from '../directives/scroll-trigger/scroll-trigger.directive';
 import { ScrollMapItem } from './scroll-map-item';
 import * as _ from 'lodash';
+import { BaseScrollHandler } from './base-scroll-handler';
+import { TouchScrollHandler } from './touch-scroll-handler';
+import { WheelScrollHandler } from './wheel-scroll-handler';
 
 export type ScrollHandlerOptions = {
   horizontal?: boolean,
@@ -30,10 +33,6 @@ export class ScrollHandler {
   _scrollMap: ScrollMapItem[];
   timeline = new TimelineMax();
   scrollListener: any;
-  mouseWheelListener: any;
-  touchStartListener: any;
-  touchMoveListener: any;
-  touchEndListener: any;
   resizeListener: any;
   animatingScroll = false;
   instantPosition = 0;
@@ -41,14 +40,10 @@ export class ScrollHandler {
   _scrollMapPosition = new BehaviorSubject<{ x: number, y: number }>(undefined);
   _viewportSize;
   _contentSize;
-  lastTouch;
   triggers: { trigger: ScrollTriggerDirective, activated: boolean }[] = [];
   previousScrollPosition = 0;
   previousStickTo: ScrollTriggerDirective;
-  subscriptions: Subscription[] = [];
-  wheelEventReleased = new Subject<any>();
-  wheelEventCaptured = false;
-  touchMoves = [];
+  scrollHandlers: BaseScrollHandler[] = [];
 
   constructor(private service: ScrollService,
               public element: HTMLElement,
@@ -63,6 +58,13 @@ export class ScrollHandler {
 
     if (this.initialPosition) {
       this.scrollTo(this.initialPosition, 0);
+    }
+
+    if (this.overrideScroll) {
+      this.scrollHandlers.push(
+        new TouchScrollHandler(service, this, zone),
+        new WheelScrollHandler(service, this, zone)
+      );
     }
 
     this.setInitialPosition();
@@ -117,8 +119,6 @@ export class ScrollHandler {
   }
 
   bind() {
-    this.subscriptions.push(this.wheelEventReleased.debounceTime(600).subscribe(() => this.handleWheelReleaseEvent()));
-
     this.zone.runOutsideAngular(() => {
       this.scrollListener = () => {
         return this.handleScrollEvent();
@@ -130,234 +130,25 @@ export class ScrollHandler {
 
       this.viewport.addEventListener('scroll', this.scrollListener);
       window.addEventListener('resize', this.resizeListener);
-
-      if (this.overrideScroll) {
-        if (this.mouseWheelListener) {
-          return;
-        }
-
-        this.mouseWheelListener = e => {
-          return this.handleWheelEvent(e);
-        };
-
-        this.touchStartListener = e => {
-          return this.handleTouchStartEvent(e);
-        };
-
-        this.touchMoveListener = e => {
-          return this.handleTouchMoveEvent(e);
-        };
-
-        this.touchEndListener = () => {
-          return this.handleTouchEndEvent();
-        };
-
-        document.body.addEventListener('wheel', this.mouseWheelListener);
-        document.body.addEventListener('touchstart', this.touchStartListener);
-        document.body.addEventListener('touchmove', this.touchMoveListener);
-        document.body.addEventListener('touchend', this.touchEndListener);
-      }
     });
+
+    this.scrollHandlers.forEach(item => item.bind());
   }
 
   unbind() {
-    this.subscriptions.forEach(item => item.unsubscribe());
-
     if (this.scrollListener) {
       this.viewport.removeEventListener('scroll', this.scrollListener);
-    }
-
-    if (this.mouseWheelListener) {
-      document.body.removeEventListener('wheel', this.mouseWheelListener);
-    }
-
-    if (this.touchStartListener) {
-      document.body.removeEventListener('touchstart', this.touchStartListener);
-    }
-
-    if (this.touchMoveListener) {
-      document.body.removeEventListener('touchend', this.touchMoveListener);
-    }
-
-    if (this.touchEndListener) {
-      document.body.removeEventListener('touchmove', this.touchEndListener);
     }
 
     if (this.resizeListener) {
       window.removeEventListener('resize', this.resizeListener);
     }
+
+    this.scrollHandlers.forEach(item => item.unbind());
   }
 
   handleScrollEvent() {
     this.onScroll();
-  }
-
-  handleWheelEvent(e) {
-    if (!this.service.handleAllowed(this) || !this.enabled) {
-      e.preventDefault();
-      return false;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (this.wheelEventCaptured) {
-      if (this.animatingScroll) {
-        this.wheelEventReleased.next(e);
-      }
-
-      return;
-    }
-
-    if (this.animatingScroll) {
-      return false;
-    }
-
-    let deltaX, deltaY;
-    const speed = 1;
-    const DELTA_SCALE = {
-      STANDARD: 1,
-      OTHERS: -3,
-    };
-
-    if (e['deltaX'] != undefined) {
-      const deltaModes = [1.0, 28.0, 500.0];
-      const deltaMode = deltaModes[e.deltaMode] || deltaModes[0];
-
-      deltaX = e.deltaX / DELTA_SCALE.STANDARD * deltaMode;
-      deltaY = e.deltaY / DELTA_SCALE.STANDARD * deltaMode;
-    } else if (e['wheelDeltaX'] != undefined) {
-      deltaX = e.wheelDeltaX / DELTA_SCALE.OTHERS;
-      deltaY = e.wheelDeltaY / DELTA_SCALE.OTHERS;
-    } else {
-      deltaX = 0;
-      deltaY = e.wheelDelta / DELTA_SCALE.OTHERS;
-    }
-
-    deltaX *= speed;
-    deltaY *= speed;
-
-    deltaX = Math.round(deltaX);
-    deltaY = Math.round(deltaY);
-
-    if (this._scrollMap) {
-      this.handleScrollMapScrollEvent(deltaX, deltaY, 0.1);
-    } else {
-      this.handleDefaultScrollEvent(deltaX, deltaY, 0.16);
-    }
-
-    return false;
-  }
-
-  handleWheelReleaseEvent() {
-    this.wheelEventCaptured = false;
-  }
-
-  handleTouchStartEvent(e) {
-    if (!this.service.handleAllowed(this) || !this.enabled) {
-      return false;
-    }
-
-    e.stopPropagation();
-
-    if (this.animatingScroll) {
-      return false;
-    }
-
-    this.lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    this.touchMoves = [];
-
-    return false;
-  }
-
-  handleTouchMoveEvent(e) {
-    if (!this.service.handleAllowed(this)) {
-      return false;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (this.animatingScroll) {
-      return false;
-    }
-
-    const touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-
-    if (this.lastTouch !== undefined) {
-      const speed = 1;
-
-      const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
-      const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
-
-      if (this._scrollMap) {
-        this.handleScrollMapScrollEvent(deltaX, deltaY, 0);
-      } else {
-        this.handleDefaultScrollEvent(deltaX, deltaY, 0);
-      }
-
-      this.touchMoves.push({
-        date: new Date(),
-        deltaX: deltaX,
-        deltaY: deltaY
-      })
-    }
-
-    this.lastTouch = touch;
-  }
-
-  handleTouchEndEvent() {
-    if (!this.service.handleAllowed(this)) {
-      return false;
-    }
-
-    this.lastTouch = undefined;
-
-    if (this.animatingScroll) {
-      return false;
-    }
-
-    this.handleTouchEndInertia(this.touchMoves);
-  }
-
-  handleTouchEndInertia(touches) {
-    const a = 220; // duration
-    const b = 0.1; // decrease
-    const c = 5; // amplitude
-    const ease = x => {
-      if (x > a) {
-        return 0;
-      } else if (x <= 0) {
-        return 1;
-      } else {
-        const f = (x, a, b) => (Math.acos(b * 2 / a * x - 1) / Math.PI);
-        return c * f(x, a, 1) / f(x, a, b);
-      }
-    };
-
-    const result = touches.map(item => {
-      const now: any = new Date();
-      const multiply = ease(now - item.date);
-
-      return {
-        deltaX: item.deltaX * multiply,
-        deltaY: item.deltaY * multiply
-      };
-    }).reduce((sum, item) => {
-      return {
-        deltaX: sum.deltaX + item.deltaX,
-        deltaY: sum.deltaY + item.deltaY
-      };
-    }, {
-      deltaX: 0,
-      deltaY: 0
-    });
-
-    if (this._scrollMap) {
-      this.handleScrollMapScrollEvent(result.deltaX, result.deltaY, 0.1 * 3);
-    } else {
-      this.handleDefaultScrollEvent(result.deltaX, result.deltaY, 0.16 * 3);
-    }
   }
 
   handleScrollMapScrollEvent(deltaX, deltaY, duration) {
@@ -626,8 +417,7 @@ export class ScrollHandler {
 
     if (stickTo) {
       this.previousStickTo = stickTo;
-      this.wheelEventCaptured = true;
-      this.wheelEventReleased.next();
+      this.scrollHandlers.forEach(item => item.onStickTo(stickTo.position));
       this.scrollTo(stickTo.position, 0.9);
       return true;
     }
