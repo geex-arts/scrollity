@@ -48,6 +48,7 @@ export class ScrollHandler {
   subscriptions: Subscription[] = [];
   wheelEventReleased = new Subject<any>();
   wheelEventCaptured = false;
+  touchMoves = [];
 
   constructor(private service: ScrollService,
               public element: HTMLElement,
@@ -236,9 +237,9 @@ export class ScrollHandler {
     deltaY = Math.round(deltaY);
 
     if (this._scrollMap) {
-      this.handleScrollMapScrollEvent(deltaX, deltaY);
+      this.handleScrollMapScrollEvent(deltaX, deltaY, 0.1);
     } else {
-      this.handleDefaultScrollEvent(deltaX, deltaY);
+      this.handleDefaultScrollEvent(deltaX, deltaY, 0.16);
     }
 
     return false;
@@ -260,6 +261,7 @@ export class ScrollHandler {
     }
 
     this.lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    this.touchMoves = [];
 
     return false;
   }
@@ -276,29 +278,80 @@ export class ScrollHandler {
       return false;
     }
 
-    const speed = 1;
     const touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
-    const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
 
-    if (this.animatingScroll) {
-      return false;
-    }
+    if (this.lastTouch !== undefined) {
+      const speed = 1;
 
-    if (this._scrollMap) {
-      this.handleScrollMapScrollEvent(deltaX, deltaY);
-    } else {
-      this.handleDefaultScrollEvent(deltaX, deltaY);
+      const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
+      const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
+
+      if (this._scrollMap) {
+        this.handleScrollMapScrollEvent(deltaX, deltaY, 0.1);
+      } else {
+        this.handleDefaultScrollEvent(deltaX, deltaY, 0.16);
+      }
+
+      this.touchMoves.push({
+        date: new Date(),
+        deltaX: deltaX,
+        deltaY: deltaY
+      })
     }
 
     this.lastTouch = touch;
   }
 
   handleTouchEndEvent() {
+    if (!this.service.handleAllowed(this)) {
+      return false;
+    }
+
     this.lastTouch = undefined;
+    this.handleTouchEndInertia(this.touchMoves);
   }
 
-  handleScrollMapScrollEvent(deltaX, deltaY) {
+  handleTouchEndInertia(touches) {
+    const a = 220; // duration
+    const b = 0.1; // decrease
+    const c = 5; // amplitude
+    const ease = x => {
+      if (x > a) {
+        return 0;
+      } else if (x <= 0) {
+        return 1;
+      } else {
+        const f = (x, a, b) => (Math.acos(b * 2 / a * x - 1) / Math.PI);
+        return c * f(x, a, 1) / f(x, a, b);
+      }
+    };
+
+    const result = touches.map(item => {
+      const now: any = new Date();
+      const multiply = ease(now - item.date);
+
+      return {
+        deltaX: item.deltaX * multiply,
+        deltaY: item.deltaY * multiply
+      };
+    }).reduce((sum, item) => {
+      return {
+        deltaX: sum.deltaX + item.deltaX,
+        deltaY: sum.deltaY + item.deltaY
+      };
+    }, {
+      deltaX: 0,
+      deltaY: 0
+    });
+
+    if (this._scrollMap) {
+      this.handleScrollMapScrollEvent(result.deltaX, result.deltaY, 0.1 * 3);
+    } else {
+      this.handleDefaultScrollEvent(result.deltaX, result.deltaY, 0.16 * 3);
+    }
+  }
+
+  handleScrollMapScrollEvent(deltaX, deltaY, duration) {
     let delta = deltaX + deltaY;
 
     const totalDistance = this._scrollMap
@@ -315,10 +368,10 @@ export class ScrollHandler {
       position = totalDistance;
     }
 
-    this.scrollToMapPosition(position, 0.1);
+    this.scrollToMapPosition(position, duration);
   }
 
-  handleDefaultScrollEvent(deltaX, deltaY) {
+  handleDefaultScrollEvent(deltaX, deltaY, duration) {
     let delta = deltaX + deltaY;
 
     if (this.preventScroll(delta)) {
@@ -333,7 +386,7 @@ export class ScrollHandler {
       position = 0;
     }
 
-    this.scrollToBasicPosition(position, 0.16);
+    this.scrollToBasicPosition(position, duration);
   }
 
   handleResizeEvent() {
