@@ -444,6 +444,7 @@ export class ScrollHandler {
 
     params['onComplete'] = () => {
       obs.next();
+      this.animatingScroll = false; // workaround
     };
 
     this.previousScrollPosition = this.position;
