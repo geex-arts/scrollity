@@ -308,6 +308,11 @@ export class ScrollHandler {
     }
 
     this.lastTouch = undefined;
+
+    if (this.animatingScroll) {
+      return false;
+    }
+
     this.handleTouchEndInertia(this.touchMoves);
   }
 
