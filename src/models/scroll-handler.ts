@@ -68,6 +68,10 @@ export class ScrollHandler {
     this.setInitialPosition();
     this.updateViewportSize();
     this.updateContentSize();
+
+    this.zone.runOutsideAngular(() => {
+      setInterval(() => this.updateContentSize(), 500);
+    });
   }
 
   set scrollMap(scrollMap) {
@@ -386,10 +390,7 @@ export class ScrollHandler {
     let position = this._position.value;
 
     position += delta;
-
-    if (position < 0) {
-      position = 0;
-    }
+    position = this.normalizePosition(position);
 
     this.scrollToBasicPosition(position, duration);
   }
