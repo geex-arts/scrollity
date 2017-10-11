@@ -504,12 +504,6 @@ export class ScrollHandler {
       if (position > this.getInstantPosition()) {
         this.updateContentSize();
       }
-
-      position = this.normalizePosition(position);
-
-      if (position != this._position.value) {
-        this._position.next(position);
-      }
     });
 
     return obs;
