@@ -43,23 +43,23 @@ export class ScrollService {
     return last && last.handler === handler;
   }
 
-  scrollTo(position, duration, ease = undefined): Observable<{}> {
+  scrollTo(position, duration, ease = undefined, cancellable = false): Observable<{}> {
     let last = _.last(this.handlers);
 
     if (!last) {
       return;
     }
 
-    return last.handler.scrollTo(position, duration, ease);
+    return last.handler.scrollTo(position, duration, ease, cancellable);
   }
 
-  scrollPosition() {
+  get position() {
     let last = _.last(this.handlers);
 
     if (!last) {
       return;
     }
 
-    return last.handler.scrollPosition();
+    return last.handler.position;
   }
 }
