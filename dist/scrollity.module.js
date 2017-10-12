@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+window['_gsQueue'] = window['_gsDefine'] = null;
+window['GreenSockGlobals'] = {};
 var core_1 = require("@angular/core");
 var common_1 = require("@angular/common");
 require("rxjs/Rx");
-window['_gsQueue'] = window['_gsDefine'] = null;
-window['GreenSockGlobals'] = {};
+require("gsap");
 var scroll_service_1 = require("./services/scroll.service");
 var scroll_trigger_directive_1 = require("./directives/scroll-trigger/scroll-trigger.directive");
 var scrollTriggered_pipe_1 = require("./pipes/scrollTriggered.pipe");

@@ -156,6 +156,9 @@ export abstract class ScrollHandler {
   }
 
   get viewportSize() {
+    if (!this._viewportSize) {
+      this.updateViewportSize();
+    }
     return this._viewportSize;
   }
 
@@ -170,6 +173,9 @@ export abstract class ScrollHandler {
   }
 
   get contentSize() {
+    if (!this._contentSize) {
+      this.updateContentSize();
+    }
     return this._contentSize;
   }
 

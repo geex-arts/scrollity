@@ -54,7 +54,7 @@ export class MapScrollHandler extends ScrollHandler {
       position = estimatedPosition;
     }
 
-    this.scrollTo(position, duration);
+    this.scrollTo(position, duration, undefined, true);
 
     if (estimatedPosition > position) {
       this._scrollOverflow.next(estimatedPosition - position);
@@ -68,26 +68,7 @@ export class MapScrollHandler extends ScrollHandler {
       this.animatingScroll = true;
     }
 
-    let mapDistance = 0;
-    let mapPosition = { x: 0, y: 0 };
-
-    this._scrollMap.forEach(item => {
-      const distance = item.getDistance(this.viewportSize);
-      const percentage = (position - mapDistance) / distance;
-      const insidePosition = item.getPosition(this.viewportSize, percentage);
-
-      if (distance >= 0) {
-        mapDistance += distance;
-      }
-
-      mapPosition.x += insidePosition.x;
-      mapPosition.y += insidePosition.y;
-
-      if (percentage >= 0 && percentage < 1) {
-        return false;
-      }
-    });
-
+    let mapPosition = this.calculateScrollMapPosition(position);
     let params = {
       scrollLeft: mapPosition.x,
       scrollTop: mapPosition.y
@@ -125,6 +106,30 @@ export class MapScrollHandler extends ScrollHandler {
     }
 
     return obs;
+  }
+
+  calculateScrollMapPosition(position) {
+    let mapDistance = 0;
+    let mapPosition = { x: 0, y: 0 };
+
+    this._scrollMap.forEach(item => {
+      const distance = item.getDistance(this.viewportSize);
+      const percentage = (position - mapDistance) / distance;
+      const insidePosition = item.getPosition(this.viewportSize, percentage);
+
+      if (distance >= 0) {
+        mapDistance += distance;
+      }
+
+      mapPosition.x += insidePosition.x;
+      mapPosition.y += insidePosition.y;
+
+      if (percentage >= 0 && percentage < 1) {
+        return false;
+      }
+    });
+
+    return mapPosition;
   }
 
   updateScrollMapItems() {

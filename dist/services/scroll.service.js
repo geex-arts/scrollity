@@ -26,21 +26,26 @@ var ScrollService = /** @class */ (function () {
         var last = _.last(this.handlers);
         return last && last.handler === handler;
     };
-    ScrollService.prototype.scrollTo = function (position, duration, ease) {
+    ScrollService.prototype.scrollTo = function (position, duration, ease, cancellable) {
         if (ease === void 0) { ease = undefined; }
+        if (cancellable === void 0) { cancellable = false; }
         var last = _.last(this.handlers);
         if (!last) {
             return;
         }
-        return last.handler.scrollTo(position, duration, ease);
+        return last.handler.scrollTo(position, duration, ease, cancellable);
     };
-    ScrollService.prototype.scrollPosition = function () {
-        var last = _.last(this.handlers);
-        if (!last) {
-            return;
-        }
-        return last.handler.scrollPosition();
-    };
+    Object.defineProperty(ScrollService.prototype, "position", {
+        get: function () {
+            var last = _.last(this.handlers);
+            if (!last) {
+                return;
+            }
+            return last.handler.position;
+        },
+        enumerable: true,
+        configurable: true
+    });
     ScrollService.decorators = [
         { type: core_1.Injectable },
     ];

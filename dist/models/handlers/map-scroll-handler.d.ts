@@ -15,6 +15,10 @@ export declare class MapScrollHandler extends ScrollHandler {
     handleResizeEvent(): void;
     handleScrollEvent(deltaX: any, deltaY: any, duration: any): void;
     scrollTo(position: any, duration: any, ease?: any, cancellable?: boolean): Observable<{}>;
+    calculateScrollMapPosition(position: any): {
+        x: number;
+        y: number;
+    };
     updateScrollMapItems(): void;
     readonly scrollMapPosition: Observable<{
         x: number;
