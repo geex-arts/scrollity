@@ -2,11 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var scroll_trigger_directive_1 = require("./directives/scroll-trigger/scroll-trigger.directive");
 exports.ScrollTriggerDirective = scroll_trigger_directive_1.ScrollTriggerDirective;
-var scroll_handler_1 = require("./models/scroll-handler");
+var scroll_handler_1 = require("./models/handlers/scroll-handler");
 exports.ScrollHandler = scroll_handler_1.ScrollHandler;
-var element_scroll_map_item_1 = require("./models/element-scroll-map-item");
+var default_scroll_handler_1 = require("./models/handlers/default-scroll-handler");
+exports.DefaultScrollHandler = default_scroll_handler_1.DefaultScrollHandler;
+var map_scroll_handler_1 = require("./models/handlers/map-scroll-handler");
+exports.MapScrollHandler = map_scroll_handler_1.MapScrollHandler;
+var element_scroll_map_item_1 = require("./models/handlers/map-scroll-handler/element-scroll-map-item");
 exports.ElementScrollMapItem = element_scroll_map_item_1.ElementScrollMapItem;
-var line_scroll_map_item_1 = require("./models/line-scroll-map-item");
+var line_scroll_map_item_1 = require("./models/handlers/map-scroll-handler/line-scroll-map-item");
 exports.LineScrollMapItem = line_scroll_map_item_1.LineScrollMapItem;
 var scrollTriggered_pipe_1 = require("./pipes/scrollTriggered.pipe");
 exports.ScrollTriggeredPipe = scrollTriggered_pipe_1.ScrollTriggeredPipe;
