@@ -54,7 +54,7 @@ export class MapScrollHandler extends ScrollHandler {
       position = estimatedPosition;
     }
 
-    this.scrollTo(position, duration);
+    this.scrollTo(position, duration, undefined, true);
 
     if (estimatedPosition > position) {
       this._scrollOverflow.next(estimatedPosition - position);
