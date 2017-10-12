@@ -12,6 +12,6 @@ export declare class ScrollService {
     addScrollHandler(owner: any, handler: ScrollHandler): ScrollHandler;
     removeScrollHandler(owner: any): void;
     handleAllowed(handler: ScrollHandler): boolean;
-    scrollTo(position: any, duration: any, ease?: any): Observable<{}>;
-    scrollPosition(): any;
+    scrollTo(position: any, duration: any, ease?: any, cancellable?: boolean): Observable<{}>;
+    readonly position: any;
 }

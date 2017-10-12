@@ -105,6 +105,9 @@ var ScrollHandler = /** @class */ (function () {
     };
     Object.defineProperty(ScrollHandler.prototype, "viewportSize", {
         get: function () {
+            if (!this._viewportSize) {
+                this.updateViewportSize();
+            }
             return this._viewportSize;
         },
         enumerable: true,
@@ -121,6 +124,9 @@ var ScrollHandler = /** @class */ (function () {
     };
     Object.defineProperty(ScrollHandler.prototype, "contentSize", {
         get: function () {
+            if (!this._contentSize) {
+                this.updateContentSize();
+            }
             return this._contentSize;
         },
         enumerable: true,

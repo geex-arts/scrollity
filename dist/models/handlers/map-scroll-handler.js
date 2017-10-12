@@ -57,7 +57,7 @@ var MapScrollHandler = /** @class */ (function (_super) {
         else {
             position = estimatedPosition;
         }
-        this.scrollTo(position, duration);
+        this.scrollTo(position, duration, undefined, true);
         if (estimatedPosition > position) {
             this._scrollOverflow.next(estimatedPosition - position);
         }
@@ -72,21 +72,7 @@ var MapScrollHandler = /** @class */ (function (_super) {
         if (!cancellable) {
             this.animatingScroll = true;
         }
-        var mapDistance = 0;
-        var mapPosition = { x: 0, y: 0 };
-        this._scrollMap.forEach(function (item) {
-            var distance = item.getDistance(_this.viewportSize);
-            var percentage = (position - mapDistance) / distance;
-            var insidePosition = item.getPosition(_this.viewportSize, percentage);
-            if (distance >= 0) {
-                mapDistance += distance;
-            }
-            mapPosition.x += insidePosition.x;
-            mapPosition.y += insidePosition.y;
-            if (percentage >= 0 && percentage < 1) {
-                return false;
-            }
-        });
+        var mapPosition = this.calculateScrollMapPosition(position);
         var params = {
             scrollLeft: mapPosition.x,
             scrollTop: mapPosition.y
@@ -117,6 +103,25 @@ var MapScrollHandler = /** @class */ (function (_super) {
             this.timeline = this.timeline.clear().set(this.element, params);
         }
         return obs;
+    };
+    MapScrollHandler.prototype.calculateScrollMapPosition = function (position) {
+        var _this = this;
+        var mapDistance = 0;
+        var mapPosition = { x: 0, y: 0 };
+        this._scrollMap.forEach(function (item) {
+            var distance = item.getDistance(_this.viewportSize);
+            var percentage = (position - mapDistance) / distance;
+            var insidePosition = item.getPosition(_this.viewportSize, percentage);
+            if (distance >= 0) {
+                mapDistance += distance;
+            }
+            mapPosition.x += insidePosition.x;
+            mapPosition.y += insidePosition.y;
+            if (percentage >= 0 && percentage < 1) {
+                return false;
+            }
+        });
+        return mapPosition;
     };
     MapScrollHandler.prototype.updateScrollMapItems = function () {
         if (!this._scrollMap) {
