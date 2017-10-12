@@ -87,11 +87,7 @@ export class WheelScrollSourceHandler implements ScrollSourceHandler {
     deltaX = Math.round(deltaX);
     deltaY = Math.round(deltaY);
 
-    if (this.scrollHandler._scrollMap) {
-      this.scrollHandler.handleScrollMapScrollEvent(deltaX, deltaY, 0.1);
-    } else {
-      this.scrollHandler.handleDefaultScrollEvent(deltaX, deltaY, 0.16);
-    }
+    this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0.16);
 
     return false;
   }

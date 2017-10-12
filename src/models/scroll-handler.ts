@@ -1,35 +1,38 @@
 import { NgZone } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { TimelineMax } from 'gsap';
-import * as _ from 'lodash';
 
 import { ScrollService } from '../services/scroll.service';
 import { ScrollTriggerDirective } from '../directives/scroll-trigger/scroll-trigger.directive';
-import { ScrollMapItem } from './scroll-map-item';
 import { ScrollSourceHandler } from './scroll-source-handler';
 import { TouchScrollSourceHandler } from './touch-scroll-source-handler';
 import { WheelScrollSourceHandler } from './wheel-scroll-source-handler';
 
 export type ScrollHandlerOptions = {
+  element: HTMLElement;
   horizontal?: boolean,
   translate?: boolean,
   initialPosition?: number,
   viewport?: any,
-  overrideScroll?: boolean,
-  scrollMap?: ScrollMapItem[];
+  overrideScroll?: boolean
 };
 
-export class ScrollHandler {
+export abstract class ScrollHandler {
 
+  abstract getInstantPosition(): number;
+  abstract handleScrollEvent(deltaX, deltaY, duration);
+  abstract scrollTo(position, duration, ease): Observable<{}>;
+
+  service: ScrollService;
+  zone: NgZone;
+  element: HTMLElement;
   enabled = true;
   horizontal: boolean;
   translate: boolean;
   initialPosition: number;
   viewport: any;
   overrideScroll: boolean;
-  _scrollMap: ScrollMapItem[];
   timeline = new TimelineMax();
   scrollListener: any;
   resizeListener: any;
@@ -44,25 +47,24 @@ export class ScrollHandler {
   previousStickTo: ScrollTriggerDirective;
   scrollSourceHandlers: ScrollSourceHandler[] = [];
 
-  constructor(private service: ScrollService,
-              public element: HTMLElement,
-              private zone: NgZone,
-              options: ScrollHandlerOptions) {
+  constructor(options: ScrollHandlerOptions) {
+    this.element = options.element;
     this.horizontal = options.horizontal || false;
     this.translate = options.translate || false;
     this.initialPosition = options.initialPosition || 0;
-    this.viewport = options.viewport || element;
+    this.viewport = options.viewport || this.element;
     this.overrideScroll = options.overrideScroll || true;
-    this.scrollMap = options.scrollMap;
+  }
 
+  onInit() {
     if (this.initialPosition) {
-      this.scrollTo(this.initialPosition, 0);
+      this.scrollTo(this.initialPosition, 0, undefined);
     }
 
     if (this.overrideScroll) {
       this.scrollSourceHandlers.push(
-        new TouchScrollSourceHandler(this, zone),
-        new WheelScrollSourceHandler(this, zone)
+          new TouchScrollSourceHandler(this, this.zone),
+          new WheelScrollSourceHandler(this, this.zone)
       );
     }
 
@@ -73,11 +75,6 @@ export class ScrollHandler {
     this.zone.runOutsideAngular(() => {
       setInterval(() => this.updateContentSize(), 500);
     });
-  }
-
-  set scrollMap(scrollMap) {
-    this._scrollMap = scrollMap;
-    this.setInitialPosition();
   }
 
   setInitialPosition() {
@@ -93,13 +90,7 @@ export class ScrollHandler {
     this._position.next(value);
   }
 
-  getInstantPosition(): number {
-    if (this._scrollMap) {
-      return this.element.scrollLeft + this.element.scrollTop;
-    } else {
-      return this.horizontal ? this.element.scrollLeft : this.element.scrollTop;
-    }
-  }
+
 
   addTrigger(trigger) {
     this.triggers.push({ trigger: trigger, activated: false });
@@ -124,7 +115,7 @@ export class ScrollHandler {
   bind() {
     this.zone.runOutsideAngular(() => {
       this.scrollListener = () => {
-        return this.handleScrollEvent();
+        return this.handleScrollEndEvent();
       };
 
       this.resizeListener = () => {
@@ -150,164 +141,14 @@ export class ScrollHandler {
     this.scrollSourceHandlers.forEach(item => item.unbind());
   }
 
-  handleScrollEvent() {
+  handleScrollEndEvent() {
     this.onScroll();
-  }
-
-  handleScrollMapScrollEvent(deltaX, deltaY, duration) {
-    let delta = deltaX + deltaY;
-
-    const totalDistance = this._scrollMap
-      .map(item => item.getDistance(this.viewportSize))
-      .reduce((sum, current) => sum + current);
-
-    let position = this.position;
-
-    position += delta;
-
-    if (position < 0) {
-      position = 0;
-    } else if (position > totalDistance) {
-      position = totalDistance;
-    }
-
-    this.scrollToMapPosition(position, duration);
-  }
-
-  handleDefaultScrollEvent(deltaX, deltaY, duration) {
-    let delta = deltaX + deltaY;
-
-    if (this.preventScroll(delta)) {
-      return;
-    }
-
-    let position = this._position.value;
-
-    position += delta;
-    position = this.normalizePosition(position);
-
-    this.scrollToBasicPosition(position, duration);
   }
 
   handleResizeEvent() {
     this.updateViewportSize();
     this.updateContentSize();
     this.updateTriggerPositions();
-    this.updateScrollMapItems();
-  }
-
-  scrollTo(position, duration, ease = undefined): Observable<{}> {
-    let obs: Observable<{}>;
-    this.animatingScroll = true;
-
-    if (this._scrollMap) {
-      obs = this.scrollToMapPosition(position, duration, ease);
-    } else {
-      obs = this.scrollToBasicPosition(position, duration, ease);
-    }
-
-    obs.subscribe(() => this.animatingScroll = false);
-
-    return obs;
-  }
-
-  scrollToMapPosition(position, duration, ease = undefined): Observable<{}> {
-    let mapDistance = 0;
-    let mapPosition = { x: 0, y: 0 };
-
-    _.each(this._scrollMap, item => {
-      const distance = item.getDistance(this.viewportSize);
-      const percentage = (position - mapDistance) / distance;
-      const insidePosition = item.getPosition(this.viewportSize, percentage);
-
-      if (distance >= 0) {
-        mapDistance += distance;
-      }
-
-      mapPosition.x += insidePosition.x;
-      mapPosition.y += insidePosition.y;
-
-      if (percentage >= 0 && percentage < 1) {
-        return false;
-      }
-    });
-
-    let params = {
-      scrollLeft: mapPosition.x,
-      scrollTop: mapPosition.y
-    };
-    let obs = new Subject();
-
-    if (ease) {
-      params['ease'] = ease;
-    }
-
-    params['onComplete'] = () => {
-      obs.next();
-      this.animatingScroll = false; // workaround
-    };
-
-    this.previousScrollPosition = this.position;
-
-    if (this._position.value != position) {
-      this._position.next(position);
-    }
-
-    if (this._scrollMapPosition.value == undefined
-      || this._scrollMapPosition.value.x !== mapPosition.x
-      || this._scrollMapPosition.value.y !== mapPosition.y) {
-      this._scrollMapPosition.next(mapPosition);
-    }
-
-    if (duration) {
-      this.timeline = this.timeline.clear().to(this.element, duration, params);
-    } else {
-      this.timeline = this.timeline.clear().set(this.element, params);
-    }
-
-    return obs;
-  }
-
-  scrollToBasicPosition(position, duration, ease = undefined): Observable<{}> {
-    this.previousScrollPosition = this.position;
-
-    if (position != this._position.value) {
-      this._position.next(position);
-    }
-
-    let params;
-    let obs = new Subject();
-
-    if (this.translate) {
-      params = this.horizontal ? { x: position } : { y: position };
-    } else {
-      params = this.horizontal ? { scrollLeft: position } : { scrollTop: position };
-    }
-
-    if (ease) {
-      params['ease'] = ease;
-    }
-
-    params['onComplete'] = () => {
-      obs.next();
-      this.animatingScroll = false; // workaround
-    };
-
-    if (duration) {
-      this.timeline = this.timeline.clear().to(this.element, duration, params);
-    } else {
-      this.timeline = this.timeline.clear().set(this.element, params);
-    }
-
-    obs.subscribe(() => {
-      position = this._position.value;
-
-      if (position > this.getInstantPosition()) {
-        this.updateContentSize();
-      }
-    });
-
-    return obs;
   }
 
   get viewportSize() {
@@ -346,23 +187,12 @@ export class ScrollHandler {
     }
   }
 
-  updateScrollMapItems() {
-    if (!this._scrollMap) {
-      return;
-    }
-    this._scrollMap.forEach(item => item.onLayoutUpdated());
-  }
-
   get position$(): Observable<number> {
     return this._position.asObservable();
   }
 
   get position() {
     return this._position.value;
-  }
-
-  get scrollMapPosition(): Observable<{ x: number, y: number }> {
-    return this._scrollMapPosition.asObservable();
   }
 
   normalizePosition(position) {
@@ -377,37 +207,14 @@ export class ScrollHandler {
     return position;
   }
 
-  get scrollMapItemPositions() {
-    let sum = 0;
-    return this._scrollMap.map(item => {
-      const distance = item.getDistance(this.viewportSize);
-      const obj = {
-        startPosition: sum,
-        endPosition: sum + distance,
-        item: item
-      };
-      sum += distance;
-      return obj;
-    });
-  }
-
   preventScroll(delta): boolean {
-    const scrollMapItems = this._scrollMap ? this.scrollMapItemPositions : undefined;
     const direction = delta != 0 ? delta / Math.abs(delta) : 0;
     let stickTo: ScrollTriggerDirective;
 
     for (let trigger of this.triggers) {
-      let triggerPosition = trigger.trigger.position;
+      let triggerPosition = this.getTriggerPosition(trigger.trigger);
       const triggerDelta = triggerPosition - this.position;
       const triggerDirection = triggerDelta != 0 ? triggerDelta / Math.abs(triggerDelta) : 0;
-
-      if (this._scrollMap) {
-        const scrollMapItem = _.first(scrollMapItems.filter(item => item.item === trigger.trigger.scrollMapItem));
-
-        if (scrollMapItem) {
-          triggerPosition += scrollMapItem.startPosition;
-        }
-      }
 
       if (trigger.trigger.stick != undefined
           && triggerDirection == direction
@@ -421,29 +228,24 @@ export class ScrollHandler {
     if (stickTo) {
       this.previousStickTo = stickTo;
       this.scrollSourceHandlers.forEach(item => item.onStickTo(stickTo.position));
-      this.scrollTo(stickTo.position, 0.9);
+      this.scrollTo(stickTo.position, 0.9, undefined);
       return true;
     }
 
     return false;
   }
 
+  getTriggerPosition(trigger: ScrollTriggerDirective): number {
+    return trigger.position;
+  }
+
   onScroll() {
-    const scrollMapItems = this._scrollMap ? this.scrollMapItemPositions : undefined;
     let triggered = false;
 
     this.instantPosition = this.getInstantPosition();
 
     for (let trigger of this.triggers) {
-      let triggerPosition = trigger.trigger.position;
-
-      if (this._scrollMap) {
-        const scrollMapItem = _.first(scrollMapItems.filter(item => item.item === trigger.trigger.scrollMapItem));
-
-        if (scrollMapItem) {
-          triggerPosition += scrollMapItem.startPosition;
-        }
-      }
+      let triggerPosition = this.getTriggerPosition(trigger.trigger);
 
       if (this.position >= triggerPosition && !trigger.activated) {
         trigger.activated = true;

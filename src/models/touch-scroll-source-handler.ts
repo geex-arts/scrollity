@@ -85,11 +85,7 @@ export class TouchScrollSourceHandler implements ScrollSourceHandler {
       const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
       const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
 
-      if (this.scrollHandler._scrollMap) {
-        this.scrollHandler.handleScrollMapScrollEvent(deltaX, deltaY, 0);
-      } else {
-        this.scrollHandler.handleDefaultScrollEvent(deltaX, deltaY, 0);
-      }
+      this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0);
 
       this.touchMoves.push({
         date: new Date(),
@@ -148,11 +144,7 @@ export class TouchScrollSourceHandler implements ScrollSourceHandler {
       deltaY: 0
     });
 
-    if (this.scrollHandler._scrollMap) {
-      this.scrollHandler.handleScrollMapScrollEvent(result.deltaX, result.deltaY, 0.1 * 3);
-    } else {
-      this.scrollHandler.handleDefaultScrollEvent(result.deltaX, result.deltaY, 0.16 * 3);
-    }
+    this.scrollHandler.handleScrollEvent(result.deltaX, result.deltaY, 0.16 * 3);
   }
 
   onStickTo(position: number) { }
