@@ -1,5 +1,5 @@
 
-export interface BaseScrollHandler {
+export interface ScrollSourceHandler {
 
   bind();
   unbind();

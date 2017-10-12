@@ -2,9 +2,9 @@ import { NgZone } from '@angular/core';
 
 import { ScrollService } from '../services/scroll.service';
 import { ScrollHandler } from './scroll-handler';
-import { BaseScrollHandler } from './base-scroll-handler';
+import { ScrollSourceHandler } from './scroll-source-handler';
 
-export class TouchScrollHandler implements BaseScrollHandler {
+export class TouchScrollSourceHandler implements ScrollSourceHandler {
 
   touchStartListener: any;
   touchMoveListener: any;

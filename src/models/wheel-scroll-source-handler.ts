@@ -4,9 +4,9 @@ import { Subject } from 'rxjs/Subject';
 
 import { ScrollService } from '../services/scroll.service';
 import { ScrollHandler } from './scroll-handler';
-import { BaseScrollHandler } from './base-scroll-handler';
+import { ScrollSourceHandler } from './scroll-source-handler';
 
-export class WheelScrollHandler implements BaseScrollHandler {
+export class WheelScrollSourceHandler implements ScrollSourceHandler {
 
   mouseWheelListener: any;
   subscriptions: Subscription[] = [];

@@ -9,9 +9,9 @@ import { ScrollService } from '../services/scroll.service';
 import { ScrollTriggerDirective } from '../directives/scroll-trigger/scroll-trigger.directive';
 import { ScrollMapItem } from './scroll-map-item';
 import * as _ from 'lodash';
-import { BaseScrollHandler } from './base-scroll-handler';
-import { TouchScrollHandler } from './touch-scroll-handler';
-import { WheelScrollHandler } from './wheel-scroll-handler';
+import { ScrollSourceHandler } from './scroll-source-handler';
+import { TouchScrollSourceHandler } from './touch-scroll-source-handler';
+import { WheelScrollSourceHandler } from './wheel-scroll-source-handler';
 
 export type ScrollHandlerOptions = {
   horizontal?: boolean,
@@ -43,7 +43,7 @@ export class ScrollHandler {
   triggers: { trigger: ScrollTriggerDirective, activated: boolean }[] = [];
   previousScrollPosition = 0;
   previousStickTo: ScrollTriggerDirective;
-  scrollHandlers: BaseScrollHandler[] = [];
+  scrollSourceHandlers: ScrollSourceHandler[] = [];
 
   constructor(private service: ScrollService,
               public element: HTMLElement,
@@ -61,9 +61,9 @@ export class ScrollHandler {
     }
 
     if (this.overrideScroll) {
-      this.scrollHandlers.push(
-        new TouchScrollHandler(service, this, zone),
-        new WheelScrollHandler(service, this, zone)
+      this.scrollSourceHandlers.push(
+        new TouchScrollSourceHandler(service, this, zone),
+        new WheelScrollSourceHandler(service, this, zone)
       );
     }
 
@@ -132,7 +132,7 @@ export class ScrollHandler {
       window.addEventListener('resize', this.resizeListener);
     });
 
-    this.scrollHandlers.forEach(item => item.bind());
+    this.scrollSourceHandlers.forEach(item => item.bind());
   }
 
   unbind() {
@@ -144,7 +144,7 @@ export class ScrollHandler {
       window.removeEventListener('resize', this.resizeListener);
     }
 
-    this.scrollHandlers.forEach(item => item.unbind());
+    this.scrollSourceHandlers.forEach(item => item.unbind());
   }
 
   handleScrollEvent() {
@@ -417,7 +417,7 @@ export class ScrollHandler {
 
     if (stickTo) {
       this.previousStickTo = stickTo;
-      this.scrollHandlers.forEach(item => item.onStickTo(stickTo.position));
+      this.scrollSourceHandlers.forEach(item => item.onStickTo(stickTo.position));
       this.scrollTo(stickTo.position, 0.9);
       return true;
     }
