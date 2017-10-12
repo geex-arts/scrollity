@@ -1,9 +1,12 @@
 export { ScrollTriggerEvent, ScrollTriggerDirective } from './directives/scroll-trigger/scroll-trigger.directive';
 
-export { ScrollHandler, ScrollHandlerOptions } from './models/scroll-handler';
-export { ScrollMapItem } from './models/scroll-map-item';
-export { ElementScrollMapItem } from './models/element-scroll-map-item';
-export { LineScrollMapItem } from './models/line-scroll-map-item';
+export { ScrollHandler, ScrollHandlerOptions } from './models/handlers/scroll-handler';
+export { DefaultScrollHandler } from './models/handlers/default-scroll-handler';
+export { MapScrollHandler } from './models/handlers/map-scroll-handler';
+
+export { ScrollMapItem } from './models/handlers/map-scroll-handler/scroll-map-item';
+export { ElementScrollMapItem } from './models/handlers/map-scroll-handler/element-scroll-map-item';
+export { LineScrollMapItem } from './models/handlers/map-scroll-handler/line-scroll-map-item';
 
 export { ScrollTriggeredPipe } from './pipes/scrollTriggered.pipe';
 

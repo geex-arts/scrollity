@@ -2,7 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import * as _ from 'lodash';
 
-import { ScrollHandler, ScrollHandlerOptions } from '../models/scroll-handler';
+import { ScrollHandler } from '../models/handlers/scroll-handler';
 
 export type DocumentScrollHandler = {
   owner: any,
@@ -16,8 +16,10 @@ export class ScrollService {
 
   constructor(private zone: NgZone) { }
 
-  addScrollHandler(owner, element, options: ScrollHandlerOptions = {}): ScrollHandler {
-    let handler = new ScrollHandler(this, element, this.zone, options);
+  addScrollHandler(owner, handler: ScrollHandler): ScrollHandler {
+    handler.service = this;
+    handler.zone = this.zone;
+    handler.onInit();
 
     this.handlers.push({ owner: owner, handler: handler });
 

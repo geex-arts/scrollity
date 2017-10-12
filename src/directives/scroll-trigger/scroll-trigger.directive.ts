@@ -2,9 +2,9 @@ import {
   Directive, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges
 } from '@angular/core';
 
-import { ScrollHandler } from '../../models/scroll-handler';
+import { ScrollHandler } from '../../models/handlers/scroll-handler';
 import { DocumentService } from '../../services/document.service';
-import { ScrollMapItem } from '../../models/scroll-map-item';
+import { ScrollMapItem } from '../../models/handlers/map-scroll-handler/scroll-map-item';
 
 export type ScrollTriggerOptions = {
   handler: ScrollHandler,

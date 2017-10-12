@@ -2,15 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var core_1 = require("@angular/core");
 var _ = require("lodash");
-var scroll_handler_1 = require("../models/scroll-handler");
 var ScrollService = /** @class */ (function () {
     function ScrollService(zone) {
         this.zone = zone;
         this.handlers = [];
     }
-    ScrollService.prototype.addScrollHandler = function (owner, element, options) {
-        if (options === void 0) { options = {}; }
-        var handler = new scroll_handler_1.ScrollHandler(this, element, this.zone, options);
+    ScrollService.prototype.addScrollHandler = function (owner, handler) {
+        handler.service = this;
+        handler.zone = this.zone;
+        handler.onInit();
         this.handlers.push({ owner: owner, handler: handler });
         handler.bind();
         return handler;
