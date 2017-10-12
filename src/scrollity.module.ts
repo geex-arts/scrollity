@@ -1,9 +1,10 @@
+window['_gsQueue'] = window['_gsDefine'] = null;
+window['GreenSockGlobals'] = {};
+
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import 'rxjs/Rx';
-
-window['_gsQueue'] = window['_gsDefine'] = null;
-window['GreenSockGlobals'] = {};
+import 'gsap';
 
 import { ScrollService } from './services/scroll.service';
 import { ScrollTriggerDirective } from './directives/scroll-trigger/scroll-trigger.directive';
