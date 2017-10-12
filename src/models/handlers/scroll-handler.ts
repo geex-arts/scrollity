@@ -46,6 +46,7 @@ export abstract class ScrollHandler {
   previousScrollPosition = 0;
   previousStickTo: ScrollTriggerDirective;
   scrollSourceHandlers: ScrollSource[] = [];
+  updateContentSizeInterval;
 
   constructor(options: ScrollHandlerOptions) {
     this.element = options.element;
@@ -73,7 +74,10 @@ export abstract class ScrollHandler {
     this.updateContentSize();
 
     this.zone.runOutsideAngular(() => {
-      setInterval(() => this.updateContentSize(), 500);
+      if (this.updateContentSizeInterval) {
+        clearInterval(this.updateContentSizeInterval);
+      }
+      this.updateContentSizeInterval = setInterval(() => this.updateContentSize(), 500);
     });
   }
 
