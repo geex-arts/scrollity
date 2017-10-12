@@ -21,11 +21,14 @@ export class DefaultScrollHandler extends ScrollHandler {
     position += delta;
     position = this.normalizePosition(position);
 
-    this.scrollTo(position, duration);
+    this.scrollTo(position, duration, undefined, true);
   }
 
-  scrollTo(position, duration, ease = undefined): Observable<{}> {
-    this.animatingScroll = true;
+  scrollTo(position, duration, ease = undefined, cancellable = false): Observable<{}> {
+    if (!cancellable) {
+      this.animatingScroll = true;
+    }
+
     this.previousScrollPosition = this.position;
 
     if (position != this._position.value) {
@@ -47,7 +50,10 @@ export class DefaultScrollHandler extends ScrollHandler {
 
     params['onComplete'] = () => {
       obs.next();
-      this.animatingScroll = false;
+
+      if (!cancellable) {
+        this.animatingScroll = false;
+      }
     };
 
     if (duration) {

@@ -22,7 +22,7 @@ export abstract class ScrollHandler {
 
   abstract getInstantPosition(): number;
   abstract handleScrollEvent(deltaX, deltaY, duration);
-  abstract scrollTo(position, duration, ease): Observable<{}>;
+  abstract scrollTo(position, duration, ease, cancellable);
 
   service: ScrollService;
   zone: NgZone;
@@ -59,7 +59,7 @@ export abstract class ScrollHandler {
 
   onInit() {
     if (this.initialPosition) {
-      this.scrollTo(this.initialPosition, 0, undefined);
+      this.scrollTo(this.initialPosition, 0, undefined, false);
     }
 
     if (this.overrideScroll) {
@@ -230,7 +230,7 @@ export abstract class ScrollHandler {
     if (stickTo) {
       this.previousStickTo = stickTo;
       this.scrollSourceHandlers.forEach(item => item.onStickTo(stickTo.position));
-      this.scrollTo(stickTo.position, 0.9, undefined);
+      this.scrollTo(stickTo.position, 0.9, undefined, false);
       return true;
     }
 

@@ -56,8 +56,10 @@ export class MapScrollHandler extends ScrollHandler {
     this.scrollTo(position, duration);
   }
 
-  scrollTo(position, duration, ease = undefined): Observable<{}> {
-    this.animatingScroll = true;
+  scrollTo(position, duration, ease = undefined, cancellable = false): Observable<{}> {
+    if (!cancellable) {
+      this.animatingScroll = true;
+    }
 
     let mapDistance = 0;
     let mapPosition = { x: 0, y: 0 };
@@ -91,7 +93,10 @@ export class MapScrollHandler extends ScrollHandler {
 
     params['onComplete'] = () => {
       obs.next();
-      this.animatingScroll = false;
+
+      if (!cancellable) {
+        this.animatingScroll = false;
+      }
     };
 
     this.previousScrollPosition = this.position;
