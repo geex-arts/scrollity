@@ -2,10 +2,10 @@ import { NgZone } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 
-import { ScrollHandler } from './scroll-handler';
-import { ScrollSourceHandler } from './scroll-source-handler';
+import { ScrollHandler } from '../handlers/scroll-handler';
+import { ScrollSource } from './scroll-source.interface';
 
-export class WheelScrollSourceHandler implements ScrollSourceHandler {
+export class WheelScrollSource implements ScrollSource {
 
   mouseWheelListener: any;
   subscriptions: Subscription[] = [];

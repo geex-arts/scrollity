@@ -3,11 +3,11 @@ import { Observable } from 'rxjs/Observable';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { TimelineMax } from 'gsap';
 
-import { ScrollService } from '../services/scroll.service';
-import { ScrollTriggerDirective } from '../directives/scroll-trigger/scroll-trigger.directive';
-import { ScrollSourceHandler } from './scroll-source-handler';
-import { TouchScrollSourceHandler } from './touch-scroll-source-handler';
-import { WheelScrollSourceHandler } from './wheel-scroll-source-handler';
+import { ScrollService } from '../../services/scroll.service';
+import { ScrollTriggerDirective } from '../../directives/scroll-trigger/scroll-trigger.directive';
+import { ScrollSource } from '../sources/scroll-source.interface';
+import { TouchScrollSource } from '../sources/touch-scroll-source';
+import { WheelScrollSource } from '../sources/wheel-scroll-source';
 
 export type ScrollHandlerOptions = {
   element: HTMLElement;
@@ -45,7 +45,7 @@ export abstract class ScrollHandler {
   triggers: { trigger: ScrollTriggerDirective, activated: boolean }[] = [];
   previousScrollPosition = 0;
   previousStickTo: ScrollTriggerDirective;
-  scrollSourceHandlers: ScrollSourceHandler[] = [];
+  scrollSourceHandlers: ScrollSource[] = [];
 
   constructor(options: ScrollHandlerOptions) {
     this.element = options.element;
@@ -63,8 +63,8 @@ export abstract class ScrollHandler {
 
     if (this.overrideScroll) {
       this.scrollSourceHandlers.push(
-          new TouchScrollSourceHandler(this, this.zone),
-          new WheelScrollSourceHandler(this, this.zone)
+          new TouchScrollSource(this, this.zone),
+          new WheelScrollSource(this, this.zone)
       );
     }
 
@@ -89,8 +89,6 @@ export abstract class ScrollHandler {
     this.instantPosition = value;
     this._position.next(value);
   }
-
-
 
   addTrigger(trigger) {
     this.triggers.push({ trigger: trigger, activated: false });

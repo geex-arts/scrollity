@@ -2,7 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import * as _ from 'lodash';
 
-import { ScrollHandler } from '../models/scroll-handler';
+import { ScrollHandler } from '../models/handlers/scroll-handler';
 
 export type DocumentScrollHandler = {
   owner: any,

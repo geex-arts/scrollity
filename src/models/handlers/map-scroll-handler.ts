@@ -3,8 +3,8 @@ import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import * as _ from 'lodash';
 
-import { ScrollTriggerDirective } from '../directives/scroll-trigger/scroll-trigger.directive';
-import { ScrollMapItem } from './scroll-map-item';
+import { ScrollTriggerDirective } from '../../directives/scroll-trigger/scroll-trigger.directive';
+import { ScrollMapItem } from './map-scroll-handler/scroll-map-item';
 import { ScrollHandler, ScrollHandlerOptions } from './scroll-handler';
 
 export class MapScrollHandler extends ScrollHandler {
@@ -34,6 +34,10 @@ export class MapScrollHandler extends ScrollHandler {
 
   handleScrollEvent(deltaX, deltaY, duration) {
     let delta = deltaX + deltaY;
+
+    if (this.preventScroll(delta)) {
+      return;
+    }
 
     const totalDistance = this._scrollMap
       .map(item => item.getDistance(this.viewportSize))

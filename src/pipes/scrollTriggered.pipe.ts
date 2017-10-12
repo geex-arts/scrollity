@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import { ScrollHandler } from '../models/scroll-handler';
+import { ScrollHandler } from '../models/handlers/scroll-handler';
 
 @Pipe({
   name: 'scrollTriggered',
