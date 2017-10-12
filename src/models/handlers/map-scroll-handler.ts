@@ -43,17 +43,24 @@ export class MapScrollHandler extends ScrollHandler {
       .map(item => item.getDistance(this.viewportSize))
       .reduce((sum, current) => sum + current);
 
-    let position = this.position;
+    const estimatedPosition = this.position + delta;
+    let position;
 
-    position += delta;
-
-    if (position < 0) {
+    if (estimatedPosition < 0) {
       position = 0;
-    } else if (position > totalDistance) {
+    } else if (estimatedPosition > totalDistance) {
       position = totalDistance;
+    } else {
+      position = estimatedPosition;
     }
 
     this.scrollTo(position, duration);
+
+    if (estimatedPosition > position) {
+      this._scrollOverflow.next(estimatedPosition - position);
+    } else if (estimatedPosition < 0) {
+      this._scrollOverflow.next(estimatedPosition);
+    }
   }
 
   scrollTo(position, duration, ease = undefined, cancellable = false): Observable<{}> {

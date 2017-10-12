@@ -16,12 +16,16 @@ export class DefaultScrollHandler extends ScrollHandler {
       return;
     }
 
-    let position = this._position.value;
-
-    position += delta;
-    position = this.normalizePosition(position);
+    const estimatedPosition = this._position.value + delta;
+    const position = this.normalizePosition(estimatedPosition);
 
     this.scrollTo(position, duration, undefined, true);
+
+    if (estimatedPosition > position) {
+      this._scrollOverflow.next(estimatedPosition - position);
+    } else if (estimatedPosition < 0) {
+      this._scrollOverflow.next(estimatedPosition);
+    }
   }
 
   scrollTo(position, duration, ease = undefined, cancellable = false): Observable<{}> {

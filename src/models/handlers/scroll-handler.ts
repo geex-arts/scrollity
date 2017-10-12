@@ -8,6 +8,7 @@ import { ScrollTriggerDirective } from '../../directives/scroll-trigger/scroll-t
 import { ScrollSource } from '../sources/scroll-source.interface';
 import { TouchScrollSource } from '../sources/touch-scroll-source';
 import { WheelScrollSource } from '../sources/wheel-scroll-source';
+import { Subject } from 'rxjs/Subject';
 
 export type ScrollHandlerOptions = {
   element: HTMLElement;
@@ -47,6 +48,7 @@ export abstract class ScrollHandler {
   previousStickTo: ScrollTriggerDirective;
   scrollSourceHandlers: ScrollSource[] = [];
   updateContentSizeInterval;
+  _scrollOverflow = new Subject<number>();
 
   constructor(options: ScrollHandlerOptions) {
     this.element = options.element;
@@ -195,6 +197,10 @@ export abstract class ScrollHandler {
 
   get position() {
     return this._position.value;
+  }
+
+  get scrollOverflow$(): Observable<number> {
+    return this._scrollOverflow.asObservable();
   }
 
   normalizePosition(position) {
