@@ -1,6 +1,5 @@
 import { NgZone } from '@angular/core';
 
-import { ScrollService } from '../services/scroll.service';
 import { ScrollHandler } from './scroll-handler';
 import { ScrollSourceHandler } from './scroll-source-handler';
 
@@ -12,8 +11,7 @@ export class TouchScrollSourceHandler implements ScrollSourceHandler {
   lastTouch;
   touchMoves = [];
 
-  constructor(private service: ScrollService,
-              private scrollHandler: ScrollHandler,
+  constructor(private scrollHandler: ScrollHandler,
               private zone: NgZone) { }
 
   bind() {
@@ -51,7 +49,7 @@ export class TouchScrollSourceHandler implements ScrollSourceHandler {
   }
 
   handleTouchStartEvent(e) {
-    if (!this.service.handleAllowed(this.scrollHandler) || !this.scrollHandler.enabled) {
+    if (!this.scrollHandler.handleAllowed) {
       return false;
     }
 
@@ -68,7 +66,7 @@ export class TouchScrollSourceHandler implements ScrollSourceHandler {
   }
 
   handleTouchMoveEvent(e) {
-    if (!this.service.handleAllowed(this.scrollHandler)) {
+    if (!this.scrollHandler.handleAllowed) {
       return false;
     }
 
@@ -104,7 +102,7 @@ export class TouchScrollSourceHandler implements ScrollSourceHandler {
   }
 
   handleTouchEndEvent() {
-    if (!this.service.handleAllowed(this.scrollHandler)) {
+    if (!this.scrollHandler.handleAllowed) {
       return false;
     }
 

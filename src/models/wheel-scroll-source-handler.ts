@@ -2,7 +2,6 @@ import { NgZone } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 
-import { ScrollService } from '../services/scroll.service';
 import { ScrollHandler } from './scroll-handler';
 import { ScrollSourceHandler } from './scroll-source-handler';
 
@@ -13,8 +12,7 @@ export class WheelScrollSourceHandler implements ScrollSourceHandler {
   wheelEventReleased = new Subject<any>();
   wheelEventCaptured = false;
 
-  constructor(private service: ScrollService,
-              private scrollHandler: ScrollHandler,
+  constructor(private scrollHandler: ScrollHandler,
               private zone: NgZone) { }
 
   bind() {
@@ -42,7 +40,7 @@ export class WheelScrollSourceHandler implements ScrollSourceHandler {
   }
 
   handleWheelEvent(e) {
-    if (!this.service.handleAllowed(this.scrollHandler) || !this.scrollHandler.enabled) {
+    if (!this.scrollHandler.handleAllowed) {
       e.preventDefault();
       return false;
     }

@@ -1,14 +1,13 @@
 import { NgZone } from '@angular/core';
-import { TimelineMax } from 'gsap';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Subscription } from 'rxjs/Subscription';
+import { TimelineMax } from 'gsap';
+import * as _ from 'lodash';
 
 import { ScrollService } from '../services/scroll.service';
 import { ScrollTriggerDirective } from '../directives/scroll-trigger/scroll-trigger.directive';
 import { ScrollMapItem } from './scroll-map-item';
-import * as _ from 'lodash';
 import { ScrollSourceHandler } from './scroll-source-handler';
 import { TouchScrollSourceHandler } from './touch-scroll-source-handler';
 import { WheelScrollSourceHandler } from './wheel-scroll-source-handler';
@@ -62,8 +61,8 @@ export class ScrollHandler {
 
     if (this.overrideScroll) {
       this.scrollSourceHandlers.push(
-        new TouchScrollSourceHandler(service, this, zone),
-        new WheelScrollSourceHandler(service, this, zone)
+        new TouchScrollSourceHandler(this, zone),
+        new WheelScrollSourceHandler(this, zone)
       );
     }
 
@@ -116,6 +115,10 @@ export class ScrollHandler {
 
   disable() {
     this.enabled = false;
+  }
+
+  get handleAllowed() {
+    return this.service.handleAllowed(this) && this.enabled;
   }
 
   bind() {
