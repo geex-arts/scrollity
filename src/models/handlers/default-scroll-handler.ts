@@ -9,7 +9,7 @@ export class DefaultScrollHandler extends ScrollHandler {
     return this.horizontal ? this.element.scrollLeft : this.element.scrollTop;
   }
 
-  handleScrollEvent(deltaX, deltaY, duration) {
+  handleScrollEvent(deltaX, deltaY, duration, ease = undefined) {
     let delta = deltaX + deltaY;
 
     if (this.preventScroll(delta)) {
@@ -19,7 +19,7 @@ export class DefaultScrollHandler extends ScrollHandler {
     const estimatedPosition = this._position.value + delta;
     const position = this.normalizePosition(estimatedPosition);
 
-    this.scrollTo(position, duration, undefined, true);
+    this.scrollTo(position, duration, ease, true);
 
     if (estimatedPosition > position) {
       this._scrollOverflow.next(estimatedPosition - position);
