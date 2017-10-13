@@ -87,7 +87,7 @@ export class WheelScrollSource implements ScrollSource {
     deltaX = Math.round(deltaX);
     deltaY = Math.round(deltaY);
 
-    this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0.16);
+    this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0.16, undefined);
 
     return false;
   }

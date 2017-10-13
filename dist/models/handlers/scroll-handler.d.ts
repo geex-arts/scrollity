@@ -15,7 +15,7 @@ export declare type ScrollHandlerOptions = {
 };
 export declare abstract class ScrollHandler {
     abstract getInstantPosition(): number;
-    abstract handleScrollEvent(deltaX: any, deltaY: any, duration: any): any;
+    abstract handleScrollEvent(deltaX: any, deltaY: any, duration: any, ease: any): any;
     abstract scrollTo(position: any, duration: any, ease: any, cancellable: any): any;
     service: ScrollService;
     zone: NgZone;

@@ -22,7 +22,7 @@ export type ScrollHandlerOptions = {
 export abstract class ScrollHandler {
 
   abstract getInstantPosition(): number;
-  abstract handleScrollEvent(deltaX, deltaY, duration);
+  abstract handleScrollEvent(deltaX, deltaY, duration, ease);
   abstract scrollTo(position, duration, ease, cancellable);
 
   service: ScrollService;

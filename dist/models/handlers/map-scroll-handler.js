@@ -37,8 +37,9 @@ var MapScrollHandler = /** @class */ (function (_super) {
         _super.prototype.handleResizeEvent.call(this);
         this.updateScrollMapItems();
     };
-    MapScrollHandler.prototype.handleScrollEvent = function (deltaX, deltaY, duration) {
+    MapScrollHandler.prototype.handleScrollEvent = function (deltaX, deltaY, duration, ease) {
         var _this = this;
+        if (ease === void 0) { ease = undefined; }
         var delta = deltaX + deltaY;
         if (this.preventScroll(delta)) {
             return;
@@ -57,7 +58,7 @@ var MapScrollHandler = /** @class */ (function (_super) {
         else {
             position = estimatedPosition;
         }
-        this.scrollTo(position, duration, undefined, true);
+        this.scrollTo(position, duration, ease, true);
         if (estimatedPosition > position) {
             this._scrollOverflow.next(estimatedPosition - position);
         }

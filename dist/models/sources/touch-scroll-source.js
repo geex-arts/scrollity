@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var gsap_1 = require("gsap");
 var TouchScrollSource = /** @class */ (function () {
     function TouchScrollSource(scrollHandler, zone) {
         this.scrollHandler = scrollHandler;
@@ -60,7 +61,7 @@ var TouchScrollSource = /** @class */ (function () {
             var speed = 1;
             var deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
             var deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
-            this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0);
+            this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0, undefined);
             this.touchMoves.push({
                 date: new Date(),
                 deltaX: deltaX,
@@ -82,7 +83,7 @@ var TouchScrollSource = /** @class */ (function () {
     TouchScrollSource.prototype.handleTouchEndInertia = function (touches) {
         var a = 220; // duration
         var b = 0.1; // decrease
-        var c = 5; // amplitude
+        var c = 7.5; // amplitude
         var ease = function (x) {
             if (x > a) {
                 return 0;
@@ -111,7 +112,9 @@ var TouchScrollSource = /** @class */ (function () {
             deltaX: 0,
             deltaY: 0
         });
-        this.scrollHandler.handleScrollEvent(result.deltaX, result.deltaY, 0.16 * 3);
+        var delta = Math.abs(result.deltaX) + Math.abs(result.deltaY);
+        var duration = 0.16 * 3 * delta / 150;
+        this.scrollHandler.handleScrollEvent(result.deltaX, result.deltaY, duration, gsap_1.Power4.easeOut);
     };
     TouchScrollSource.prototype.onStickTo = function (position) { };
     return TouchScrollSource;

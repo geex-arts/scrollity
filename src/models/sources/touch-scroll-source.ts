@@ -1,4 +1,5 @@
 import { NgZone } from '@angular/core';
+import { Power4 } from 'gsap';
 
 import { ScrollHandler } from '../handlers/scroll-handler';
 import { ScrollSource } from './scroll-source.interface';
@@ -85,7 +86,7 @@ export class TouchScrollSource implements ScrollSource {
       const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
       const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
 
-      this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0);
+      this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0, undefined);
 
       this.touchMoves.push({
         date: new Date(),
@@ -114,7 +115,7 @@ export class TouchScrollSource implements ScrollSource {
   handleTouchEndInertia(touches) {
     const a = 220; // duration
     const b = 0.1; // decrease
-    const c = 5; // amplitude
+    const c = 7.5; // amplitude
     const ease = x => {
       if (x > a) {
         return 0;
@@ -144,7 +145,10 @@ export class TouchScrollSource implements ScrollSource {
       deltaY: 0
     });
 
-    this.scrollHandler.handleScrollEvent(result.deltaX, result.deltaY, 0.16 * 3);
+    const delta = Math.abs(result.deltaX) + Math.abs(result.deltaY);
+    const duration = 0.16 * 3 * delta / 150;
+
+    this.scrollHandler.handleScrollEvent(result.deltaX, result.deltaY, duration, Power4.easeOut);
   }
 
   onStickTo(position: number) { }
