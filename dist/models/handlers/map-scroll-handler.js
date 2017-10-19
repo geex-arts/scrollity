@@ -19,6 +19,7 @@ var MapScrollHandler = /** @class */ (function (_super) {
     function MapScrollHandler(scrollMap, options) {
         var _this = _super.call(this, options) || this;
         _this._scrollMapPosition = new BehaviorSubject_1.BehaviorSubject(undefined);
+        _this.scrollMapItemPositions = [];
         _this.scrollMap = scrollMap;
         return _this;
     }
@@ -36,6 +37,7 @@ var MapScrollHandler = /** @class */ (function (_super) {
     MapScrollHandler.prototype.handleResizeEvent = function () {
         _super.prototype.handleResizeEvent.call(this);
         this.updateScrollMapItems();
+        this.updateScrollMapItemPositions();
     };
     MapScrollHandler.prototype.handleScrollEvent = function (deltaX, deltaY, duration, ease) {
         var _this = this;
@@ -137,24 +139,20 @@ var MapScrollHandler = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(MapScrollHandler.prototype, "scrollMapItemPositions", {
-        get: function () {
-            var _this = this;
-            var sum = 0;
-            return this._scrollMap.map(function (item) {
-                var distance = item.getDistance(_this.viewportSize);
-                var obj = {
-                    startPosition: sum,
-                    endPosition: sum + distance,
-                    item: item
-                };
-                sum += distance;
-                return obj;
-            });
-        },
-        enumerable: true,
-        configurable: true
-    });
+    MapScrollHandler.prototype.updateScrollMapItemPositions = function () {
+        var _this = this;
+        var sum = 0;
+        this.scrollMapItemPositions = this._scrollMap.map(function (item) {
+            var distance = item.getDistance(_this.viewportSize);
+            var obj = {
+                startPosition: sum,
+                endPosition: sum + distance,
+                item: item
+            };
+            sum += distance;
+            return obj;
+        });
+    };
     MapScrollHandler.prototype.getTriggerPosition = function (trigger) {
         var triggerPosition = _super.prototype.getTriggerPosition.call(this, trigger);
         var scrollMapItem = _.first(this.scrollMapItemPositions.filter(function (item) { return item.item === trigger.scrollMapItem; }));
