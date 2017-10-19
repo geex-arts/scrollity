@@ -11,6 +11,7 @@ export class MapScrollHandler extends ScrollHandler {
 
   _scrollMap: ScrollMapItem[];
   _scrollMapPosition = new BehaviorSubject<{ x: number, y: number }>(undefined);
+  scrollMapItemPositions: {startPosition: number, endPosition: number, item: ScrollMapItem }[] = [];
 
   constructor(scrollMap: ScrollMapItem[],
               options: ScrollHandlerOptions) {
@@ -30,6 +31,7 @@ export class MapScrollHandler extends ScrollHandler {
   handleResizeEvent() {
     super.handleResizeEvent();
     this.updateScrollMapItems();
+    this.updateScrollMapItemPositions();
   }
 
   handleScrollEvent(deltaX, deltaY, duration, ease = undefined) {
@@ -143,9 +145,10 @@ export class MapScrollHandler extends ScrollHandler {
     return this._scrollMapPosition.asObservable();
   }
 
-  get scrollMapItemPositions() {
+  updateScrollMapItemPositions() {
     let sum = 0;
-    return this._scrollMap.map(item => {
+
+    this.scrollMapItemPositions = this._scrollMap.map(item => {
       const distance = item.getDistance(this.viewportSize);
       const obj = {
         startPosition: sum,
