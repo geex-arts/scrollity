@@ -9,6 +9,11 @@ export declare class MapScrollHandler extends ScrollHandler {
         x: number;
         y: number;
     }>;
+    scrollMapItemPositions: {
+        startPosition: number;
+        endPosition: number;
+        item: ScrollMapItem;
+    }[];
     constructor(scrollMap: ScrollMapItem[], options: ScrollHandlerOptions);
     scrollMap: any;
     getInstantPosition(): number;
@@ -24,10 +29,6 @@ export declare class MapScrollHandler extends ScrollHandler {
         x: number;
         y: number;
     }>;
-    readonly scrollMapItemPositions: {
-        startPosition: number;
-        endPosition: number;
-        item: ScrollMapItem;
-    }[];
+    updateScrollMapItemPositions(): void;
     getTriggerPosition(trigger: ScrollTriggerDirective): number;
 }
