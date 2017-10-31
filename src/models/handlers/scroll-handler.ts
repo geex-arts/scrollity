@@ -261,20 +261,20 @@ export abstract class ScrollHandler {
     for (let trigger of this.triggers) {
       let triggerPosition = this.getTriggerPosition(trigger.trigger);
 
-      if (this.position >= triggerPosition && !trigger.activated) {
+      if (this.instantPosition >= triggerPosition && !trigger.activated) {
         trigger.activated = true;
         trigger.trigger.onActivated({
           triggerPosition: triggerPosition,
           previousScrollPosition: this.previousScrollPosition,
-          scrollPosition: this.position
+          scrollPosition: this.instantPosition
         });
         triggered = true;
-      } else if (this.position < triggerPosition && trigger.activated) {
+      } else if (this.instantPosition < triggerPosition && trigger.activated) {
         trigger.activated = false;
         trigger.trigger.onDeactivated({
           triggerPosition: triggerPosition,
           previousScrollPosition: this.previousScrollPosition,
-          scrollPosition: this.position
+          scrollPosition: this.instantPosition
         });
         triggered = true;
       }
