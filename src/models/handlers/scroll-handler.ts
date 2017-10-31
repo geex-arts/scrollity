@@ -233,7 +233,7 @@ export abstract class ScrollHandler {
       if (trigger.trigger.stick != undefined
           && triggerDirection == direction
           && this.previousStickTo != trigger.trigger
-          && Math.abs(triggerPosition - this.position) <= this.viewportSize.width + trigger.trigger.stick
+          && Math.abs(triggerPosition - this.position) <= this.viewportSize.width + trigger.trigger.stick.distance
           && (!stickTo || Math.abs(stickTo.position - this.position) > Math.abs(triggerDelta))) {
         stickTo = trigger.trigger;
       }
@@ -242,7 +242,7 @@ export abstract class ScrollHandler {
     if (stickTo) {
       this.previousStickTo = stickTo;
       this.scrollSourceHandlers.forEach(item => item.onStickTo(stickTo.position));
-      this.scrollTo(stickTo.position, 0.9, undefined, false);
+      this.scrollTo(stickTo.position, stickTo.stick.duration, stickTo.stick.ease, false);
       return true;
     }
 
@@ -261,20 +261,20 @@ export abstract class ScrollHandler {
     for (let trigger of this.triggers) {
       let triggerPosition = this.getTriggerPosition(trigger.trigger);
 
-      if (this.position >= triggerPosition && !trigger.activated) {
+      if (this.instantPosition >= triggerPosition && !trigger.activated) {
         trigger.activated = true;
         trigger.trigger.onActivated({
           triggerPosition: triggerPosition,
           previousScrollPosition: this.previousScrollPosition,
-          scrollPosition: this.position
+          scrollPosition: this.instantPosition
         });
         triggered = true;
-      } else if (this.position < triggerPosition && trigger.activated) {
+      } else if (this.instantPosition < triggerPosition && trigger.activated) {
         trigger.activated = false;
         trigger.trigger.onDeactivated({
           triggerPosition: triggerPosition,
           previousScrollPosition: this.previousScrollPosition,
-          scrollPosition: this.position
+          scrollPosition: this.instantPosition
         });
         triggered = true;
       }

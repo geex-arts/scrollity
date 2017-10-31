@@ -2,13 +2,18 @@ import { ElementRef, EventEmitter, OnChanges, OnDestroy, SimpleChanges } from '@
 import { ScrollHandler } from '../../models/handlers/scroll-handler';
 import { DocumentService } from '../../services/document.service';
 import { ScrollMapItem } from '../../models/handlers/map-scroll-handler/scroll-map-item';
+export declare type ScrollTriggerStickOptions = {
+    distance?: number;
+    duration?: number;
+    ease?: any;
+};
 export declare type ScrollTriggerOptions = {
     handler: ScrollHandler;
     elementTrigger?: number;
     screenTrigger?: number;
     offset?: number;
     scrollMapItem?: ScrollMapItem;
-    stick?: number;
+    stick?: ScrollTriggerStickOptions;
 };
 export declare type ScrollTriggerEvent = {
     triggerPosition: number;
@@ -27,7 +32,7 @@ export declare class ScrollTriggerDirective implements OnChanges, OnDestroy {
     screenTrigger: number;
     offset: number;
     scrollMapItem: ScrollMapItem;
-    stick: number;
+    stick: ScrollTriggerStickOptions;
     private _position;
     constructor(el: ElementRef, documentService: DocumentService);
     ngOnChanges(changes: SimpleChanges): void;

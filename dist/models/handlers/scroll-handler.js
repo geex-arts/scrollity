@@ -191,7 +191,7 @@ var ScrollHandler = /** @class */ (function () {
             if (trigger.trigger.stick != undefined
                 && triggerDirection == direction
                 && this.previousStickTo != trigger.trigger
-                && Math.abs(triggerPosition - this.position) <= this.viewportSize.width + trigger.trigger.stick
+                && Math.abs(triggerPosition - this.position) <= this.viewportSize.width + trigger.trigger.stick.distance
                 && (!stickTo || Math.abs(stickTo.position - this.position) > Math.abs(triggerDelta))) {
                 stickTo = trigger.trigger;
             }
@@ -199,7 +199,7 @@ var ScrollHandler = /** @class */ (function () {
         if (stickTo) {
             this.previousStickTo = stickTo;
             this.scrollSourceHandlers.forEach(function (item) { return item.onStickTo(stickTo.position); });
-            this.scrollTo(stickTo.position, 0.9, undefined, false);
+            this.scrollTo(stickTo.position, stickTo.stick.duration, stickTo.stick.ease, false);
             return true;
         }
         return false;
@@ -213,21 +213,21 @@ var ScrollHandler = /** @class */ (function () {
         for (var _i = 0, _a = this.triggers; _i < _a.length; _i++) {
             var trigger = _a[_i];
             var triggerPosition = this.getTriggerPosition(trigger.trigger);
-            if (this.position >= triggerPosition && !trigger.activated) {
+            if (this.instantPosition >= triggerPosition && !trigger.activated) {
                 trigger.activated = true;
                 trigger.trigger.onActivated({
                     triggerPosition: triggerPosition,
                     previousScrollPosition: this.previousScrollPosition,
-                    scrollPosition: this.position
+                    scrollPosition: this.instantPosition
                 });
                 triggered = true;
             }
-            else if (this.position < triggerPosition && trigger.activated) {
+            else if (this.instantPosition < triggerPosition && trigger.activated) {
                 trigger.activated = false;
                 trigger.trigger.onDeactivated({
                     triggerPosition: triggerPosition,
                     previousScrollPosition: this.previousScrollPosition,
-                    scrollPosition: this.position
+                    scrollPosition: this.instantPosition
                 });
                 triggered = true;
             }

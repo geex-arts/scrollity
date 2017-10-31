@@ -32,7 +32,12 @@ var ScrollTriggerDirective = /** @class */ (function () {
         this.screenTrigger = options.screenTrigger != undefined ? options.screenTrigger : 0.5;
         this.offset = options.offset != undefined ? options.offset : 0;
         this.scrollMapItem = options.scrollMapItem;
-        this.stick = options.stick;
+        var stick = options.stick;
+        if (stick != undefined) {
+            stick.distance = stick['distance'] != undefined ? stick.distance : 0;
+            stick.duration = stick['duration'] != undefined ? stick.duration : 1.2;
+        }
+        this.stick = stick;
         this.updatePosition();
         this.options.handler.addTrigger(this);
     };
