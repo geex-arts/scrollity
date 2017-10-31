@@ -6,13 +6,19 @@ import { ScrollHandler } from '../../models/handlers/scroll-handler';
 import { DocumentService } from '../../services/document.service';
 import { ScrollMapItem } from '../../models/handlers/map-scroll-handler/scroll-map-item';
 
+export type ScrollTriggerStickOptions = {
+  distance?: number,
+  duration?: number,
+  ease?: any
+};
+
 export type ScrollTriggerOptions = {
   handler: ScrollHandler,
   elementTrigger?: number,
   screenTrigger?: number,
   offset?: number,
   scrollMapItem?: ScrollMapItem,
-  stick?: number,
+  stick?: ScrollTriggerStickOptions
 };
 
 export type ScrollTriggerEvent = {
@@ -34,7 +40,7 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
   screenTrigger: number;
   offset: number;
   scrollMapItem: ScrollMapItem;
-  stick: number;
+  stick: ScrollTriggerStickOptions;
   private _position: number;
 
   constructor(private el: ElementRef, private documentService: DocumentService) { }
@@ -65,7 +71,15 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
     this.screenTrigger = options.screenTrigger != undefined ? options.screenTrigger : 0.5;
     this.offset = options.offset != undefined ? options.offset : 0;
     this.scrollMapItem = options.scrollMapItem;
-    this.stick = options.stick;
+
+    let stick = options.stick;
+
+    if (stick != undefined) {
+      stick.distance = stick['distance'] != undefined ? stick.distance : 0;
+      stick.duration = stick['duration'] != undefined ? stick.duration : 1.2;
+    }
+
+    this.stick = stick;
 
     this.updatePosition();
     this.options.handler.addTrigger(this);

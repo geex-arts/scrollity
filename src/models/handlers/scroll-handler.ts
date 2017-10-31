@@ -233,7 +233,7 @@ export abstract class ScrollHandler {
       if (trigger.trigger.stick != undefined
           && triggerDirection == direction
           && this.previousStickTo != trigger.trigger
-          && Math.abs(triggerPosition - this.position) <= this.viewportSize.width + trigger.trigger.stick
+          && Math.abs(triggerPosition - this.position) <= this.viewportSize.width + trigger.trigger.stick.distance
           && (!stickTo || Math.abs(stickTo.position - this.position) > Math.abs(triggerDelta))) {
         stickTo = trigger.trigger;
       }
@@ -242,7 +242,7 @@ export abstract class ScrollHandler {
     if (stickTo) {
       this.previousStickTo = stickTo;
       this.scrollSourceHandlers.forEach(item => item.onStickTo(stickTo.position));
-      this.scrollTo(stickTo.position, 0.9, undefined, false);
+      this.scrollTo(stickTo.position, stickTo.stick.duration, stickTo.stick.ease, false);
       return true;
     }
 
