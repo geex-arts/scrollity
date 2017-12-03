@@ -91,7 +91,7 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.options.handler) {
+    if (this.options && this.options.handler) {
       this.options.handler.removeTrigger(this);
     }
   }
