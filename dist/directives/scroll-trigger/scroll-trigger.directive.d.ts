@@ -6,6 +6,8 @@ export declare type ScrollTriggerStickOptions = {
     distance?: number;
     duration?: number;
     ease?: any;
+    threshold?: number;
+    direction?: number;
 };
 export declare type ScrollTriggerOptions = {
     handler: ScrollHandler;
@@ -27,6 +29,7 @@ export declare class ScrollTriggerDirective implements OnChanges, OnDestroy {
     triggerActivated: EventEmitter<ScrollTriggerEvent>;
     triggerDeactivated: EventEmitter<ScrollTriggerEvent>;
     triggerPassed: EventEmitter<ScrollTriggerEvent>;
+    triggerSticked: EventEmitter<{}>;
     handler: ScrollHandler;
     elementTrigger: number;
     screenTrigger: number;
@@ -42,4 +45,5 @@ export declare class ScrollTriggerDirective implements OnChanges, OnDestroy {
     readonly element: any;
     onActivated(event: ScrollTriggerEvent): void;
     onDeactivated(event: ScrollTriggerEvent): void;
+    onSticked(): void;
 }

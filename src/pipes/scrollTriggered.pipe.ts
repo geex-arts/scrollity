@@ -13,7 +13,7 @@ export class ScrollTriggeredPipe implements PipeTransform {
       return;
     }
 
-    const trigger = scrollHandler.triggers.find(item => item.trigger.element == element);
+    const trigger = scrollHandler.triggerStates.find(item => item.trigger.element == element);
     return trigger ? trigger.activated : false;
   }
 }

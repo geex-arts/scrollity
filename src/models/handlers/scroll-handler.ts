@@ -1,14 +1,15 @@
 import { NgZone } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { TimelineMax } from 'gsap';
+import 'gsap/ScrollToPlugin';
 
 import { ScrollService } from '../../services/scroll.service';
 import { ScrollTriggerDirective } from '../../directives/scroll-trigger/scroll-trigger.directive';
 import { ScrollSource } from '../sources/scroll-source.interface';
 import { TouchScrollSource } from '../sources/touch-scroll-source';
 import { WheelScrollSource } from '../sources/wheel-scroll-source';
-import { Subject } from 'rxjs/Subject';
 
 export type ScrollHandlerOptions = {
   element: HTMLElement;
@@ -16,8 +17,14 @@ export type ScrollHandlerOptions = {
   translate?: boolean,
   initialPosition?: number,
   viewport?: any,
-  overrideScroll?: boolean
+  overrideScroll?: boolean,
+  speed?: number
 };
+
+export interface ScrollTriggerState {
+  trigger: ScrollTriggerDirective;
+  activated: boolean;
+}
 
 export abstract class ScrollHandler {
 
@@ -34,6 +41,7 @@ export abstract class ScrollHandler {
   initialPosition: number;
   viewport: any;
   overrideScroll: boolean;
+  speed: number;
   timeline = new TimelineMax();
   scrollListener: any;
   resizeListener: any;
@@ -43,7 +51,7 @@ export abstract class ScrollHandler {
   _scrollMapPosition = new BehaviorSubject<{ x: number, y: number }>(undefined);
   _viewportSize;
   _contentSize;
-  triggers: { trigger: ScrollTriggerDirective, activated: boolean }[] = [];
+  triggerStates: ScrollTriggerState[] = [];
   previousScrollPosition = 0;
   previousStickTo: ScrollTriggerDirective;
   scrollSourceHandlers: ScrollSource[] = [];
@@ -52,11 +60,12 @@ export abstract class ScrollHandler {
 
   constructor(options: ScrollHandlerOptions) {
     this.element = options.element;
-    this.horizontal = options.horizontal || false;
-    this.translate = options.translate || false;
-    this.initialPosition = options.initialPosition || 0;
-    this.viewport = options.viewport || this.element;
-    this.overrideScroll = options.overrideScroll || true;
+    this.horizontal = options.horizontal != undefined ? options.horizontal : false;
+    this.translate = options.translate != undefined ? options.translate : false;
+    this.initialPosition = options.initialPosition != undefined ? options.initialPosition : 0;
+    this.viewport = options.viewport != undefined ? options.viewport : this.element;
+    this.overrideScroll = options.overrideScroll != undefined ? options.overrideScroll : true;
+    this.speed = options.speed != undefined ? options.speed : 1;
   }
 
   onInit() {
@@ -97,11 +106,13 @@ export abstract class ScrollHandler {
   }
 
   addTrigger(trigger) {
-    this.triggers.push({ trigger: trigger, activated: false });
+    const state = { trigger: trigger, activated: false };
+    this.triggerStates.push(state);
+    this.updateTriggerState(state)
   }
 
   removeTrigger(trigger) {
-    this.triggers = this.triggers.filter(item => item !== trigger.trigger);
+    this.triggerStates = this.triggerStates.filter(item => item !== trigger.trigger);
   }
 
   enable() {
@@ -126,7 +137,10 @@ export abstract class ScrollHandler {
         return this.handleResizeEvent();
       };
 
-      this.viewport.addEventListener('scroll', this.scrollListener);
+      if (this.viewport) {
+        this.viewport.addEventListener('scroll', this.scrollListener);
+      }
+
       window.addEventListener('resize', this.resizeListener);
     });
 
@@ -134,7 +148,7 @@ export abstract class ScrollHandler {
   }
 
   unbind() {
-    if (this.scrollListener) {
+    if (this.scrollListener && this.viewport) {
       this.viewport.removeEventListener('scroll', this.scrollListener);
     }
 
@@ -146,7 +160,7 @@ export abstract class ScrollHandler {
   }
 
   handleScrollEndEvent() {
-    this.onScroll();
+    window.requestAnimationFrame(() => this.onScroll());
   }
 
   handleResizeEvent() {
@@ -163,6 +177,10 @@ export abstract class ScrollHandler {
   }
 
   updateViewportSize() {
+    if (!this.viewport) {
+      return;
+    }
+
     this._viewportSize = this.translate ? {
       width: this.viewport.parentNode['clientWidth'],
       height: this.viewport.parentNode['clientHeight']
@@ -180,6 +198,10 @@ export abstract class ScrollHandler {
   }
 
   updateContentSize() {
+    if (!this.element) {
+      return;
+    }
+
     this._contentSize = this.translate ? {
       width: this.element.offsetWidth,
       height: this.element.offsetHeight
@@ -189,8 +211,22 @@ export abstract class ScrollHandler {
     };
   }
 
+  get scrollSize() {
+    const viewportSize = this.viewportSize;
+    const contentSize = this.contentSize;
+
+    if (!viewportSize || !contentSize) {
+      return;
+    }
+
+    return {
+      width: contentSize.width - viewportSize.width,
+      height: contentSize.height - viewportSize.height
+    }
+  }
+
   updateTriggerPositions() {
-    const changes = this.triggers.map(trigger => trigger.trigger.updatePosition());
+    const changes = this.triggerStates.map(trigger => trigger.trigger.updatePosition());
 
     if (changes.filter(item => item).length) {
       this.onScroll();
@@ -212,10 +248,10 @@ export abstract class ScrollHandler {
   normalizePosition(position) {
     if (position < 0) {
       position = 0;
-    } else if (this.horizontal && position > this.contentSize.width - this.viewportSize.width) {
-      position = this.contentSize.width - this.viewportSize.width;
-    } else if (!this.horizontal && position > this.contentSize.height - this.viewportSize.height) {
-      position = this.contentSize.height - this.viewportSize.height;
+    } else if (this.horizontal && position > this.scrollSize.width) {
+      position = this.scrollSize.width;
+    } else if (!this.horizontal && position > this.scrollSize.height) {
+      position = this.scrollSize.height;
     }
 
     return position;
@@ -225,32 +261,75 @@ export abstract class ScrollHandler {
     const direction = delta != 0 ? delta / Math.abs(delta) : 0;
     let stickTo: ScrollTriggerDirective;
 
-    for (let trigger of this.triggers) {
-      let triggerPosition = this.getTriggerPosition(trigger.trigger);
+    for (let state of this.triggerStates) {
+      let triggerPosition = this.getTriggerPosition(state.trigger);
       const triggerDelta = triggerPosition - this.position;
       const triggerDirection = triggerDelta != 0 ? triggerDelta / Math.abs(triggerDelta) : 0;
 
-      if (trigger.trigger.stick != undefined
+      if (state.trigger.stick != undefined
+          && (state.trigger.stick.direction == 0 || state.trigger.stick.direction == direction)
           && triggerDirection == direction
-          && this.previousStickTo != trigger.trigger
-          && Math.abs(triggerPosition - this.position) <= this.viewportSize.width + trigger.trigger.stick.distance
+          && this.previousStickTo != state.trigger
+          && Math.abs(triggerPosition - this.position) <= (this.horizontal ? this.viewportSize.width : this.viewportSize.height) + state.trigger.stick.distance
           && (!stickTo || Math.abs(stickTo.position - this.position) > Math.abs(triggerDelta))) {
-        stickTo = trigger.trigger;
+        stickTo = state.trigger;
       }
     }
 
-    if (stickTo) {
-      this.previousStickTo = stickTo;
-      this.scrollSourceHandlers.forEach(item => item.onStickTo(stickTo.position));
-      this.scrollTo(stickTo.position, stickTo.stick.duration, stickTo.stick.ease, false);
+    if (!stickTo) {
+      return false;
+    }
+
+    if (Math.abs(delta) < stickTo.stick.threshold) {
       return true;
     }
 
-    return false;
+    this.previousStickTo = stickTo;
+    this.scrollSourceHandlers.forEach(item => item.onStickTo(stickTo.position));
+    this.scrollTo(stickTo.position, stickTo.stick.duration, stickTo.stick.ease, false);
+    stickTo.onSticked();
+
+    return true;
   }
 
   getTriggerPosition(trigger: ScrollTriggerDirective): number {
     return trigger.position;
+  }
+
+  updateTriggerState(trigger: ScrollTriggerState): boolean {
+    let triggerPosition = this.getTriggerPosition(trigger.trigger);
+
+    if (this.instantPosition >= triggerPosition && !trigger.activated) {
+      trigger.activated = true;
+      trigger.trigger.onActivated({
+        triggerPosition: triggerPosition,
+        previousScrollPosition: this.previousScrollPosition,
+        scrollPosition: this.instantPosition
+      });
+
+      return true;
+    } else if (this.instantPosition < triggerPosition && trigger.activated) {
+      trigger.activated = false;
+      trigger.trigger.onDeactivated({
+        triggerPosition: triggerPosition,
+        previousScrollPosition: this.previousScrollPosition,
+        scrollPosition: this.instantPosition
+      });
+
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  updateTriggerStateForTrigger(trigger: ScrollTriggerDirective): boolean {
+    const state = this.triggerStates.find(item => item.trigger === trigger);
+
+    if (!state) {
+      return;
+    }
+
+    return this.updateTriggerState(state);
   }
 
   onScroll() {
@@ -258,24 +337,12 @@ export abstract class ScrollHandler {
 
     this.instantPosition = this.getInstantPosition();
 
-    for (let trigger of this.triggers) {
-      let triggerPosition = this.getTriggerPosition(trigger.trigger);
+    if (!this.overrideScroll) {
+      this._position.next(this.instantPosition);
+    }
 
-      if (this.instantPosition >= triggerPosition && !trigger.activated) {
-        trigger.activated = true;
-        trigger.trigger.onActivated({
-          triggerPosition: triggerPosition,
-          previousScrollPosition: this.previousScrollPosition,
-          scrollPosition: this.instantPosition
-        });
-        triggered = true;
-      } else if (this.instantPosition < triggerPosition && trigger.activated) {
-        trigger.activated = false;
-        trigger.trigger.onDeactivated({
-          triggerPosition: triggerPosition,
-          previousScrollPosition: this.previousScrollPosition,
-          scrollPosition: this.instantPosition
-        });
+    for (let state of this.triggerStates) {
+      if (this.updateTriggerState(state)) {
         triggered = true;
       }
     }

@@ -61,7 +61,7 @@ export class WheelScrollSource implements ScrollSource {
     }
 
     let deltaX, deltaY;
-    const speed = 1;
+    const speed = this.scrollHandler.speed;
     const DELTA_SCALE = {
       STANDARD: 1,
       OTHERS: -3,

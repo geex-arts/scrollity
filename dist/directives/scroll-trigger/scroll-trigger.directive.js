@@ -9,6 +9,7 @@ var ScrollTriggerDirective = /** @class */ (function () {
         this.triggerActivated = new core_1.EventEmitter();
         this.triggerDeactivated = new core_1.EventEmitter();
         this.triggerPassed = new core_1.EventEmitter();
+        this.triggerSticked = new core_1.EventEmitter();
     }
     ScrollTriggerDirective.prototype.ngOnChanges = function (changes) {
         var options = changes['options'].currentValue;
@@ -36,13 +37,15 @@ var ScrollTriggerDirective = /** @class */ (function () {
         if (stick != undefined) {
             stick.distance = stick['distance'] != undefined ? stick.distance : 0;
             stick.duration = stick['duration'] != undefined ? stick.duration : 1.2;
+            stick.threshold = stick['threshold'] != undefined ? stick.threshold : 0;
+            stick.direction = stick['direction'] != undefined ? stick.direction : 0;
         }
         this.stick = stick;
         this.updatePosition();
-        this.options.handler.addTrigger(this);
+        this.handler.addTrigger(this);
     };
     ScrollTriggerDirective.prototype.ngOnDestroy = function () {
-        if (this.options.handler) {
+        if (this.options && this.options.handler) {
             this.options.handler.removeTrigger(this);
         }
     };
@@ -99,6 +102,9 @@ var ScrollTriggerDirective = /** @class */ (function () {
         this.triggerDeactivated.emit(event);
         this.triggerPassed.emit(event);
     };
+    ScrollTriggerDirective.prototype.onSticked = function () {
+        this.triggerSticked.emit();
+    };
     ScrollTriggerDirective.decorators = [
         { type: core_1.Directive, args: [{ selector: '[scroll-trigger]' },] },
     ];
@@ -112,6 +118,7 @@ var ScrollTriggerDirective = /** @class */ (function () {
         'triggerActivated': [{ type: core_1.Output, args: ['triggeractivated',] },],
         'triggerDeactivated': [{ type: core_1.Output, args: ['triggerdeactivated',] },],
         'triggerPassed': [{ type: core_1.Output, args: ['triggerpassed',] },],
+        'triggerSticked': [{ type: core_1.Output, args: ['triggersticked',] },],
     };
     return ScrollTriggerDirective;
 }());

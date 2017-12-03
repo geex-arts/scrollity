@@ -9,7 +9,9 @@ import { ScrollMapItem } from '../../models/handlers/map-scroll-handler/scroll-m
 export type ScrollTriggerStickOptions = {
   distance?: number,
   duration?: number,
-  ease?: any
+  ease?: any,
+  threshold?: number,
+  direction?: number
 };
 
 export type ScrollTriggerOptions = {
@@ -34,6 +36,7 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
   @Output('triggeractivated') triggerActivated = new EventEmitter<ScrollTriggerEvent>();
   @Output('triggerdeactivated') triggerDeactivated = new EventEmitter<ScrollTriggerEvent>();
   @Output('triggerpassed') triggerPassed = new EventEmitter<ScrollTriggerEvent>();
+  @Output('triggersticked') triggerSticked = new EventEmitter<{}>();
 
   handler: ScrollHandler;
   elementTrigger: number;
@@ -77,16 +80,18 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
     if (stick != undefined) {
       stick.distance = stick['distance'] != undefined ? stick.distance : 0;
       stick.duration = stick['duration'] != undefined ? stick.duration : 1.2;
+      stick.threshold = stick['threshold'] != undefined ? stick.threshold : 0;
+      stick.direction = stick['direction'] != undefined ? stick.direction : 0;
     }
 
     this.stick = stick;
 
     this.updatePosition();
-    this.options.handler.addTrigger(this);
+    this.handler.addTrigger(this);
   }
 
   ngOnDestroy(): void {
-    if (this.options.handler) {
+    if (this.options && this.options.handler) {
       this.options.handler.removeTrigger(this);
     }
   }
@@ -145,5 +150,9 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
   onDeactivated(event: ScrollTriggerEvent) {
     this.triggerDeactivated.emit(event);
     this.triggerPassed.emit(event);
+  }
+
+  onSticked() {
+    this.triggerSticked.emit();
   }
 }

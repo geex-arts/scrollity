@@ -45,7 +45,7 @@ var WheelScrollSource = /** @class */ (function () {
             return false;
         }
         var deltaX, deltaY;
-        var speed = 1;
+        var speed = this.scrollHandler.speed;
         var DELTA_SCALE = {
             STANDARD: 1,
             OTHERS: -3,
