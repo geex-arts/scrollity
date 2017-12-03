@@ -1,6 +1,6 @@
 {
   "name": "scrollity",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Flexible scroll",
   "main": "dist/index.js",
   "devDependencies": {
