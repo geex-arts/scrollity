@@ -9,7 +9,9 @@ import { ScrollMapItem } from '../../models/handlers/map-scroll-handler/scroll-m
 export type ScrollTriggerStickOptions = {
   distance?: number,
   duration?: number,
-  ease?: any
+  ease?: any,
+  threshold?: number,
+  direction?: number
 };
 
 export type ScrollTriggerOptions = {
@@ -78,6 +80,8 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
     if (stick != undefined) {
       stick.distance = stick['distance'] != undefined ? stick.distance : 0;
       stick.duration = stick['duration'] != undefined ? stick.duration : 1.2;
+      stick.threshold = stick['threshold'] != undefined ? stick.threshold : 0;
+      stick.direction = stick['direction'] != undefined ? stick.direction : 0;
     }
 
     this.stick = stick;
