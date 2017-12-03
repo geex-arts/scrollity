@@ -3,6 +3,7 @@ export { ScrollTriggerEvent, ScrollTriggerDirective } from './directives/scroll-
 export { ScrollHandler, ScrollHandlerOptions } from './models/handlers/scroll-handler';
 export { DefaultScrollHandler } from './models/handlers/default-scroll-handler';
 export { MapScrollHandler } from './models/handlers/map-scroll-handler';
+export { ItemsScrollHandler } from './models/handlers/items-scroll-handler';
 
 export { ScrollMapItem } from './models/handlers/map-scroll-handler/scroll-map-item';
 export { ElementScrollMapItem } from './models/handlers/map-scroll-handler/element-scroll-map-item';
