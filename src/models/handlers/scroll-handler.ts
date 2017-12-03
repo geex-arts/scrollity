@@ -261,6 +261,7 @@ export abstract class ScrollHandler {
     this.previousStickTo = stickTo;
     this.scrollSourceHandlers.forEach(item => item.onStickTo(stickTo.position));
     this.scrollTo(stickTo.position, stickTo.stick.duration, stickTo.stick.ease, false);
+    stickTo.onSticked();
 
     return true;
   }

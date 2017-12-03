@@ -34,6 +34,7 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
   @Output('triggeractivated') triggerActivated = new EventEmitter<ScrollTriggerEvent>();
   @Output('triggerdeactivated') triggerDeactivated = new EventEmitter<ScrollTriggerEvent>();
   @Output('triggerpassed') triggerPassed = new EventEmitter<ScrollTriggerEvent>();
+  @Output('triggersticked') triggerSticked = new EventEmitter<{}>();
 
   handler: ScrollHandler;
   elementTrigger: number;
@@ -145,5 +146,9 @@ export class ScrollTriggerDirective implements OnChanges, OnDestroy {
   onDeactivated(event: ScrollTriggerEvent) {
     this.triggerDeactivated.emit(event);
     this.triggerPassed.emit(event);
+  }
+
+  onSticked() {
+    this.triggerSticked.emit();
   }
 }
