@@ -8,7 +8,7 @@ var ScrollTriggeredPipe = /** @class */ (function () {
         if (!scrollHandler) {
             return;
         }
-        var trigger = scrollHandler.triggers.find(function (item) { return item.trigger.element == element; });
+        var trigger = scrollHandler.triggerStates.find(function (item) { return item.trigger.element == element; });
         return trigger ? trigger.activated : false;
     };
     ScrollTriggeredPipe.decorators = [

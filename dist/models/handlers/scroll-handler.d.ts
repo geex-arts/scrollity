@@ -1,10 +1,11 @@
 import { NgZone } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import 'gsap/ScrollToPlugin';
 import { ScrollService } from '../../services/scroll.service';
 import { ScrollTriggerDirective } from '../../directives/scroll-trigger/scroll-trigger.directive';
 import { ScrollSource } from '../sources/scroll-source.interface';
-import { Subject } from 'rxjs/Subject';
 export declare type ScrollHandlerOptions = {
     element: HTMLElement;
     horizontal?: boolean;
@@ -12,7 +13,12 @@ export declare type ScrollHandlerOptions = {
     initialPosition?: number;
     viewport?: any;
     overrideScroll?: boolean;
+    speed?: number;
 };
+export interface ScrollTriggerState {
+    trigger: ScrollTriggerDirective;
+    activated: boolean;
+}
 export declare abstract class ScrollHandler {
     abstract getInstantPosition(): number;
     abstract handleScrollEvent(deltaX: any, deltaY: any, duration: any, ease: any): any;
@@ -26,6 +32,7 @@ export declare abstract class ScrollHandler {
     initialPosition: number;
     viewport: any;
     overrideScroll: boolean;
+    speed: number;
     timeline: any;
     scrollListener: any;
     resizeListener: any;
@@ -38,10 +45,7 @@ export declare abstract class ScrollHandler {
     }>;
     _viewportSize: any;
     _contentSize: any;
-    triggers: {
-        trigger: ScrollTriggerDirective;
-        activated: boolean;
-    }[];
+    triggerStates: ScrollTriggerState[];
     previousScrollPosition: number;
     previousStickTo: ScrollTriggerDirective;
     scrollSourceHandlers: ScrollSource[];
@@ -63,6 +67,10 @@ export declare abstract class ScrollHandler {
     updateViewportSize(): void;
     readonly contentSize: any;
     updateContentSize(): void;
+    readonly scrollSize: {
+        width: number;
+        height: number;
+    };
     updateTriggerPositions(): void;
     readonly position$: Observable<number>;
     readonly position: number;
@@ -70,5 +78,7 @@ export declare abstract class ScrollHandler {
     normalizePosition(position: any): any;
     preventScroll(delta: any): boolean;
     getTriggerPosition(trigger: ScrollTriggerDirective): number;
+    updateTriggerState(trigger: ScrollTriggerState): boolean;
+    updateTriggerStateForTrigger(trigger: ScrollTriggerDirective): boolean;
     onScroll(): void;
 }

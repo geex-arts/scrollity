@@ -58,7 +58,7 @@ var TouchScrollSource = /** @class */ (function () {
         }
         var touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         if (this.lastTouch !== undefined) {
-            var speed = 1;
+            var speed = this.scrollHandler.speed;
             var deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
             var deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
             this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0, undefined);
