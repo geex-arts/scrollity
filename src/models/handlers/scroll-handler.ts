@@ -200,6 +200,20 @@ export abstract class ScrollHandler {
     };
   }
 
+  get scrollSize() {
+    const viewportSize = this.viewportSize;
+    const contentSize = this.contentSize;
+
+    if (!viewportSize || !contentSize) {
+      return;
+    }
+
+    return {
+      width: contentSize.width - viewportSize.width,
+      height: contentSize.height - viewportSize.height
+    }
+  }
+
   updateTriggerPositions() {
     const changes = this.triggerStates.map(trigger => trigger.trigger.updatePosition());
 
@@ -223,10 +237,10 @@ export abstract class ScrollHandler {
   normalizePosition(position) {
     if (position < 0) {
       position = 0;
-    } else if (this.horizontal && position > this.contentSize.width - this.viewportSize.width) {
-      position = this.contentSize.width - this.viewportSize.width;
-    } else if (!this.horizontal && position > this.contentSize.height - this.viewportSize.height) {
-      position = this.contentSize.height - this.viewportSize.height;
+    } else if (this.horizontal && position > this.scrollSize.width) {
+      position = this.scrollSize.width;
+    } else if (!this.horizontal && position > this.scrollSize.height) {
+      position = this.scrollSize.height;
     }
 
     return position;
