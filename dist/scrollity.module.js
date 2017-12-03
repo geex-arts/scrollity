@@ -1,9 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-window['_gsQueue'] = window['_gsDefine'] = null;
-window['GreenSockGlobals'] = {};
 var core_1 = require("@angular/core");
 var common_1 = require("@angular/common");
+if (common_1.isPlatformBrowser(core_1.PLATFORM_ID)) {
+    var global = this || {};
+    global['window'] = global['window'] || {};
+    global['window']['_gsQueue'] = global['window']['_gsDefine'] = null;
+    global['window']['GreenSockGlobals'] = {};
+}
+var core_2 = require("@angular/core");
+var common_2 = require("@angular/common");
 require("rxjs/Rx");
 require("gsap");
 var scroll_service_1 = require("./services/scroll.service");
@@ -14,9 +20,9 @@ var ScrollityModule = /** @class */ (function () {
     function ScrollityModule() {
     }
     ScrollityModule.decorators = [
-        { type: core_1.NgModule, args: [{
+        { type: core_2.NgModule, args: [{
                     imports: [
-                        common_1.CommonModule
+                        common_2.CommonModule
                     ],
                     declarations: [
                         scroll_trigger_directive_1.ScrollTriggerDirective,
