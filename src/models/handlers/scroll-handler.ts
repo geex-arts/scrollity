@@ -160,7 +160,7 @@ export abstract class ScrollHandler {
   }
 
   handleScrollEndEvent() {
-    this.onScroll();
+    window.requestAnimationFrame(() => this.onScroll());
   }
 
   handleResizeEvent() {
