@@ -1,5 +1,13 @@
-window['_gsQueue'] = window['_gsDefine'] = null;
-window['GreenSockGlobals'] = {};
+import { PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+
+if (isPlatformBrowser(PLATFORM_ID)) {
+  let global = this || {};
+
+  global['window'] = global['window'] || {};
+  global['window']['_gsQueue'] = global['window']['_gsDefine'] = null;
+  global['window']['GreenSockGlobals'] = {};
+}
 
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
