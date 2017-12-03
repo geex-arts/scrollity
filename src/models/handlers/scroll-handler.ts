@@ -2,6 +2,7 @@ import { NgZone } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { TimelineMax } from 'gsap';
+import 'gsap/ScrollToPlugin';
 
 import { ScrollService } from '../../services/scroll.service';
 import { ScrollTriggerDirective } from '../../directives/scroll-trigger/scroll-trigger.directive';

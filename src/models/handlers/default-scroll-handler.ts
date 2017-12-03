@@ -45,7 +45,7 @@ export class DefaultScrollHandler extends ScrollHandler {
     if (this.translate) {
       params = this.horizontal ? { x: position } : { y: position };
     } else {
-      params = this.horizontal ? { scrollLeft: position } : { scrollTop: position };
+      params = this.horizontal ? { scrollTo: { x: position } } : { scrollTo: { y: position } };
     }
 
     if (ease) {
