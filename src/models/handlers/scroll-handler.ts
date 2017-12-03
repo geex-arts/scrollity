@@ -54,11 +54,11 @@ export abstract class ScrollHandler {
 
   constructor(options: ScrollHandlerOptions) {
     this.element = options.element;
-    this.horizontal = options.horizontal || false;
-    this.translate = options.translate || false;
-    this.initialPosition = options.initialPosition || 0;
-    this.viewport = options.viewport || this.element;
-    this.overrideScroll = options.overrideScroll || true;
+    this.horizontal = options.horizontal != undefined ? options.horizontal : false;
+    this.translate = options.translate != undefined ? options.translate : false;
+    this.initialPosition = options.initialPosition != undefined ? options.initialPosition : 0;
+    this.viewport = options.viewport != undefined ? options.viewport : this.element;
+    this.overrideScroll = options.overrideScroll != undefined ? options.overrideScroll : true;
     this.speed = options.speed != undefined ? options.speed : 1;
   }
 
