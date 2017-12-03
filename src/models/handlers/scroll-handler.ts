@@ -16,7 +16,8 @@ export type ScrollHandlerOptions = {
   translate?: boolean,
   initialPosition?: number,
   viewport?: any,
-  overrideScroll?: boolean
+  overrideScroll?: boolean,
+  speed?: number
 };
 
 export abstract class ScrollHandler {
@@ -34,6 +35,7 @@ export abstract class ScrollHandler {
   initialPosition: number;
   viewport: any;
   overrideScroll: boolean;
+  speed: number;
   timeline = new TimelineMax();
   scrollListener: any;
   resizeListener: any;
@@ -57,6 +59,7 @@ export abstract class ScrollHandler {
     this.initialPosition = options.initialPosition || 0;
     this.viewport = options.viewport || this.element;
     this.overrideScroll = options.overrideScroll || true;
+    this.speed = options.speed != undefined ? options.speed : 1;
   }
 
   onInit() {

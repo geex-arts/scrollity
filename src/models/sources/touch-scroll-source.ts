@@ -81,7 +81,7 @@ export class TouchScrollSource implements ScrollSource {
     const touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
 
     if (this.lastTouch !== undefined) {
-      const speed = 1;
+      const speed = this.scrollHandler.speed;
 
       const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
       const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
