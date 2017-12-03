@@ -137,7 +137,10 @@ export abstract class ScrollHandler {
         return this.handleResizeEvent();
       };
 
-      this.viewport.addEventListener('scroll', this.scrollListener);
+      if (this.viewport) {
+        this.viewport.addEventListener('scroll', this.scrollListener);
+      }
+
       window.addEventListener('resize', this.resizeListener);
     });
 
@@ -145,7 +148,7 @@ export abstract class ScrollHandler {
   }
 
   unbind() {
-    if (this.scrollListener) {
+    if (this.scrollListener && this.viewport) {
       this.viewport.removeEventListener('scroll', this.scrollListener);
     }
 
@@ -174,6 +177,10 @@ export abstract class ScrollHandler {
   }
 
   updateViewportSize() {
+    if (!this.viewport) {
+      return;
+    }
+
     this._viewportSize = this.translate ? {
       width: this.viewport.parentNode['clientWidth'],
       height: this.viewport.parentNode['clientHeight']
@@ -191,6 +198,10 @@ export abstract class ScrollHandler {
   }
 
   updateContentSize() {
+    if (!this.element) {
+      return;
+    }
+
     this._contentSize = this.translate ? {
       width: this.element.offsetWidth,
       height: this.element.offsetHeight
