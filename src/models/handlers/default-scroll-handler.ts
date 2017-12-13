@@ -60,12 +60,6 @@ export class DefaultScrollHandler extends ScrollHandler {
       }
     };
 
-    if (duration) {
-      this.timeline = this.timeline.clear().to(this.element, duration, params);
-    } else {
-      this.timeline = this.timeline.clear().set(this.element, params);
-    }
-
     obs.subscribe(() => {
       position = this._position.value;
 
@@ -73,6 +67,13 @@ export class DefaultScrollHandler extends ScrollHandler {
         this.updateContentSize();
       }
     });
+
+    if (duration) {
+      this.timeline = this.timeline.clear().to(this.element, duration, params);
+    } else {
+      this.timeline = this.timeline.clear().set(this.element, params);
+      return Observable.of({});
+    }
 
     return obs;
   }
