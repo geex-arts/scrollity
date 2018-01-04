@@ -10,6 +10,7 @@ import { ScrollTriggerDirective } from '../../directives/scroll-trigger/scroll-t
 import { ScrollSource } from '../sources/scroll-source.interface';
 import { TouchScrollSource } from '../sources/touch-scroll-source';
 import { WheelScrollSource } from '../sources/wheel-scroll-source';
+import { KeyboardScrollSource } from '../sources/keyboard-scroll-source';
 
 export type ScrollHandlerOptions = {
   element: HTMLElement;
@@ -76,7 +77,8 @@ export abstract class ScrollHandler {
     if (this.overrideScroll) {
       this.scrollSourceHandlers.push(
           new TouchScrollSource(this, this.zone),
-          new WheelScrollSource(this, this.zone)
+          new WheelScrollSource(this, this.zone),
+          new KeyboardScrollSource(this, this.zone)
       );
     }
 
