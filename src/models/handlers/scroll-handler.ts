@@ -30,7 +30,7 @@ export interface ScrollTriggerState {
 export abstract class ScrollHandler {
 
   abstract getInstantPosition(): number;
-  abstract handleScrollEvent(deltaX, deltaY, duration, ease);
+  abstract handleScrollEvent(e: UIEvent, deltaX, deltaY, duration, ease);
   abstract scrollTo(position, duration, ease, cancellable);
 
   service: ScrollService;

@@ -25,8 +25,8 @@ export class TouchScrollSource implements ScrollSource {
         return this.handleTouchMoveEvent(e);
       };
 
-      this.touchEndListener = () => {
-        return this.handleTouchEndEvent();
+      this.touchEndListener = e => {
+        return this.handleTouchEndEvent(e);
       };
 
       document.body.addEventListener('touchstart', this.touchStartListener);
@@ -86,7 +86,7 @@ export class TouchScrollSource implements ScrollSource {
       const deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
       const deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
 
-      this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0, undefined);
+      this.scrollHandler.handleScrollEvent(e, deltaX, deltaY, 0, undefined);
 
       this.touchMoves.push({
         date: new Date(),
@@ -98,7 +98,7 @@ export class TouchScrollSource implements ScrollSource {
     this.lastTouch = touch;
   }
 
-  handleTouchEndEvent() {
+  handleTouchEndEvent(e) {
     if (!this.scrollHandler.handleAllowed) {
       return false;
     }
@@ -109,10 +109,10 @@ export class TouchScrollSource implements ScrollSource {
       return false;
     }
 
-    this.handleTouchEndInertia(this.touchMoves);
+    this.handleTouchEndInertia(e, this.touchMoves);
   }
 
-  handleTouchEndInertia(touches) {
+  handleTouchEndInertia(e, touches) {
     const a = 220; // duration
     const b = 0.1; // decrease
     const c = 7.5; // amplitude
@@ -148,7 +148,7 @@ export class TouchScrollSource implements ScrollSource {
     const delta = Math.abs(result.deltaX) + Math.abs(result.deltaY);
     const duration = 0.16 * 3 * delta / 150;
 
-    this.scrollHandler.handleScrollEvent(result.deltaX, result.deltaY, duration, Power4.easeOut);
+    this.scrollHandler.handleScrollEvent(e, result.deltaX, result.deltaY, duration, Power4.easeOut);
   }
 
   onStickTo(position: number) { }

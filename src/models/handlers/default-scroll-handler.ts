@@ -9,7 +9,7 @@ export class DefaultScrollHandler extends ScrollHandler {
     return this.horizontal ? this.element.scrollLeft : this.element.scrollTop;
   }
 
-  handleScrollEvent(deltaX, deltaY, duration, ease = undefined) {
+  handleScrollEvent(e, deltaX, deltaY, duration, ease = undefined) {
     let delta = deltaX + deltaY;
 
     if (this.preventScroll(delta)) {
