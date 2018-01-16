@@ -23,7 +23,7 @@ export class ItemsScrollHandler extends ScrollHandler {
   }
 
   handleScrollEvent(e, deltaX, deltaY, duration, ease = undefined) {
-    if (this.lethargy.check(e) == false) {
+    if (e.type == 'wheel' && this.lethargy.check(e) == false) {
       return;
     }
 
