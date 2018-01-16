@@ -43,7 +43,7 @@ export class ItemsScrollHandler extends ScrollHandler {
     if (position != undefined) {
       this.handleScrollProcessing = true;
       this.scrollTo(position, duration, ease, false);
-      setTimeout(() => this.handleScrollProcessing = false, 300);
+      setTimeout(() => this.handleScrollProcessing = false, 600);
     }
   }
 
