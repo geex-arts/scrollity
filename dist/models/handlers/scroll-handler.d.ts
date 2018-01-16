@@ -21,7 +21,7 @@ export interface ScrollTriggerState {
 }
 export declare abstract class ScrollHandler {
     abstract getInstantPosition(): number;
-    abstract handleScrollEvent(deltaX: any, deltaY: any, duration: any, ease: any): any;
+    abstract handleScrollEvent(e: UIEvent, deltaX: any, deltaY: any, duration: any, ease: any): any;
     abstract scrollTo(position: any, duration: any, ease: any, cancellable: any): any;
     service: ScrollService;
     zone: NgZone;

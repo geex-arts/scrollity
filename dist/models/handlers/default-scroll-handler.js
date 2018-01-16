@@ -21,7 +21,7 @@ var DefaultScrollHandler = /** @class */ (function (_super) {
     DefaultScrollHandler.prototype.getInstantPosition = function () {
         return this.horizontal ? this.element.scrollLeft : this.element.scrollTop;
     };
-    DefaultScrollHandler.prototype.handleScrollEvent = function (deltaX, deltaY, duration, ease) {
+    DefaultScrollHandler.prototype.handleScrollEvent = function (e, deltaX, deltaY, duration, ease) {
         if (ease === void 0) { ease = undefined; }
         var delta = deltaX + deltaY;
         if (this.preventScroll(delta)) {

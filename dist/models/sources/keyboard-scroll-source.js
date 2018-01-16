@@ -38,7 +38,7 @@ var KeyboardScrollSource = /** @class */ (function () {
             return false;
         }
         var delta = KEY_CODE_DELTAS[e.keyCode];
-        this.scrollHandler.handleScrollEvent(delta.x, delta.y, 0.16, undefined);
+        this.scrollHandler.handleScrollEvent(e, delta.x, delta.y, 0.16, undefined);
         return false;
     };
     KeyboardScrollSource.prototype.onStickTo = function (position) { };

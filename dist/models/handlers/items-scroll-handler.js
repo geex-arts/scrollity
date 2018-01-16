@@ -12,11 +12,13 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var Observable_1 = require("rxjs/Observable");
 var scroll_handler_1 = require("./scroll-handler");
+var lethargy_1 = require("../../utils/lethargy");
 var ItemsScrollHandler = /** @class */ (function (_super) {
     __extends(ItemsScrollHandler, _super);
     function ItemsScrollHandler(itemSize, itemsCount, options) {
         var _this = _super.call(this, options) || this;
         _this.handleScrollProcessing = false;
+        _this.lethargy = new lethargy_1.Lethargy();
         _this.itemSize = itemSize;
         _this.itemsCount = itemsCount;
         return _this;
@@ -24,9 +26,12 @@ var ItemsScrollHandler = /** @class */ (function (_super) {
     ItemsScrollHandler.prototype.getInstantPosition = function () {
         return this.position;
     };
-    ItemsScrollHandler.prototype.handleScrollEvent = function (deltaX, deltaY, duration, ease) {
+    ItemsScrollHandler.prototype.handleScrollEvent = function (e, deltaX, deltaY, duration, ease) {
         var _this = this;
         if (ease === void 0) { ease = undefined; }
+        if (e.type == 'wheel' && this.lethargy.check(e) == false) {
+            return;
+        }
         if (this.handleScrollProcessing) {
             return;
         }
