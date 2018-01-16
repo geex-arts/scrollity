@@ -34,7 +34,7 @@ export class MapScrollHandler extends ScrollHandler {
     this.updateScrollMapItemPositions();
   }
 
-  handleScrollEvent(deltaX, deltaY, duration, ease = undefined) {
+  handleScrollEvent(e, deltaX, deltaY, duration, ease = undefined) {
     let delta = deltaX + deltaY;
 
     if (this.preventScroll(delta)) {

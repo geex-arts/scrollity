@@ -1,12 +1,14 @@
 import { Observable } from 'rxjs/Observable';
 
 import { ScrollHandler, ScrollHandlerOptions } from './scroll-handler';
+import { Lethargy } from '../../utils/lethargy';
 
 export class ItemsScrollHandler extends ScrollHandler {
 
   itemSize: number;
   itemsCount: number;
   handleScrollProcessing = false;
+  lethargy = new Lethargy();
 
   constructor(itemSize: number,
               itemsCount: number,
@@ -20,7 +22,11 @@ export class ItemsScrollHandler extends ScrollHandler {
     return this.position;
   }
 
-  handleScrollEvent(deltaX, deltaY, duration, ease = undefined) {
+  handleScrollEvent(e, deltaX, deltaY, duration, ease = undefined) {
+    if (e.type == 'wheel' && this.lethargy.check(e) == false) {
+      return;
+    }
+
     if (this.handleScrollProcessing) {
       return;
     }

@@ -68,7 +68,7 @@ var WheelScrollSource = /** @class */ (function () {
         deltaY *= speed;
         deltaX = Math.round(deltaX);
         deltaY = Math.round(deltaY);
-        this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0.16, undefined);
+        this.scrollHandler.handleScrollEvent(e, deltaX, deltaY, 0.16, undefined);
         return false;
     };
     WheelScrollSource.prototype.handleWheelReleaseEvent = function () {

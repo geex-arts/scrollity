@@ -14,7 +14,7 @@ export declare class TouchScrollSource implements ScrollSource {
     unbind(): void;
     handleTouchStartEvent(e: any): boolean;
     handleTouchMoveEvent(e: any): boolean;
-    handleTouchEndEvent(): boolean;
-    handleTouchEndInertia(touches: any): void;
+    handleTouchEndEvent(e: any): boolean;
+    handleTouchEndInertia(e: any, touches: any): void;
     onStickTo(position: number): void;
 }

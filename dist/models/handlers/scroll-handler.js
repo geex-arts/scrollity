@@ -6,6 +6,7 @@ var gsap_1 = require("gsap");
 require("gsap/ScrollToPlugin");
 var touch_scroll_source_1 = require("../sources/touch-scroll-source");
 var wheel_scroll_source_1 = require("../sources/wheel-scroll-source");
+var keyboard_scroll_source_1 = require("../sources/keyboard-scroll-source");
 var ScrollHandler = /** @class */ (function () {
     function ScrollHandler(options) {
         this.enabled = true;
@@ -32,7 +33,7 @@ var ScrollHandler = /** @class */ (function () {
             this.scrollTo(this.initialPosition, 0, undefined, false);
         }
         if (this.overrideScroll) {
-            this.scrollSourceHandlers.push(new touch_scroll_source_1.TouchScrollSource(this, this.zone), new wheel_scroll_source_1.WheelScrollSource(this, this.zone));
+            this.scrollSourceHandlers.push(new touch_scroll_source_1.TouchScrollSource(this, this.zone), new wheel_scroll_source_1.WheelScrollSource(this, this.zone), new keyboard_scroll_source_1.KeyboardScrollSource(this, this.zone));
         }
         this.setInitialPosition();
         this.updateViewportSize();

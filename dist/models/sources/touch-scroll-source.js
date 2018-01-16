@@ -16,8 +16,8 @@ var TouchScrollSource = /** @class */ (function () {
             _this.touchMoveListener = function (e) {
                 return _this.handleTouchMoveEvent(e);
             };
-            _this.touchEndListener = function () {
-                return _this.handleTouchEndEvent();
+            _this.touchEndListener = function (e) {
+                return _this.handleTouchEndEvent(e);
             };
             document.body.addEventListener('touchstart', _this.touchStartListener);
             document.body.addEventListener('touchmove', _this.touchMoveListener);
@@ -61,7 +61,7 @@ var TouchScrollSource = /** @class */ (function () {
             var speed = this.scrollHandler.speed;
             var deltaX = Math.round(this.lastTouch.x - touch.x) * speed;
             var deltaY = Math.round(this.lastTouch.y - touch.y) * speed;
-            this.scrollHandler.handleScrollEvent(deltaX, deltaY, 0, undefined);
+            this.scrollHandler.handleScrollEvent(e, deltaX, deltaY, 0, undefined);
             this.touchMoves.push({
                 date: new Date(),
                 deltaX: deltaX,
@@ -70,7 +70,7 @@ var TouchScrollSource = /** @class */ (function () {
         }
         this.lastTouch = touch;
     };
-    TouchScrollSource.prototype.handleTouchEndEvent = function () {
+    TouchScrollSource.prototype.handleTouchEndEvent = function (e) {
         if (!this.scrollHandler.handleAllowed) {
             return false;
         }
@@ -78,9 +78,9 @@ var TouchScrollSource = /** @class */ (function () {
         if (this.scrollHandler.animatingScroll) {
             return false;
         }
-        this.handleTouchEndInertia(this.touchMoves);
+        this.handleTouchEndInertia(e, this.touchMoves);
     };
-    TouchScrollSource.prototype.handleTouchEndInertia = function (touches) {
+    TouchScrollSource.prototype.handleTouchEndInertia = function (e, touches) {
         var a = 220; // duration
         var b = 0.1; // decrease
         var c = 7.5; // amplitude
@@ -114,7 +114,7 @@ var TouchScrollSource = /** @class */ (function () {
         });
         var delta = Math.abs(result.deltaX) + Math.abs(result.deltaY);
         var duration = 0.16 * 3 * delta / 150;
-        this.scrollHandler.handleScrollEvent(result.deltaX, result.deltaY, duration, gsap_1.Power4.easeOut);
+        this.scrollHandler.handleScrollEvent(e, result.deltaX, result.deltaY, duration, gsap_1.Power4.easeOut);
     };
     TouchScrollSource.prototype.onStickTo = function (position) { };
     return TouchScrollSource;

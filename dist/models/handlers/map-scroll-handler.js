@@ -39,7 +39,7 @@ var MapScrollHandler = /** @class */ (function (_super) {
         this.updateScrollMapItems();
         this.updateScrollMapItemPositions();
     };
-    MapScrollHandler.prototype.handleScrollEvent = function (deltaX, deltaY, duration, ease) {
+    MapScrollHandler.prototype.handleScrollEvent = function (e, deltaX, deltaY, duration, ease) {
         var _this = this;
         if (ease === void 0) { ease = undefined; }
         var delta = deltaX + deltaY;
