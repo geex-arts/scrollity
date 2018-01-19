@@ -16,6 +16,7 @@ export declare type ScrollTriggerOptions = {
     offset?: number;
     scrollMapItem?: ScrollMapItem;
     stick?: ScrollTriggerStickOptions;
+    id?: string;
 };
 export declare type ScrollTriggerEvent = {
     triggerPosition: number;
@@ -36,6 +37,7 @@ export declare class ScrollTriggerDirective implements OnChanges, OnDestroy {
     offset: number;
     scrollMapItem: ScrollMapItem;
     stick: ScrollTriggerStickOptions;
+    id: string;
     private _position;
     constructor(el: ElementRef, documentService: DocumentService);
     ngOnChanges(changes: SimpleChanges): void;
