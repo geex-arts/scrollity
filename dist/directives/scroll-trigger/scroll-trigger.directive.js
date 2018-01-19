@@ -33,6 +33,7 @@ var ScrollTriggerDirective = /** @class */ (function () {
         this.screenTrigger = options.screenTrigger != undefined ? options.screenTrigger : 0.5;
         this.offset = options.offset != undefined ? options.offset : 0;
         this.scrollMapItem = options.scrollMapItem;
+        this.id = options.id;
         var stick = options.stick;
         if (stick != undefined) {
             stick.distance = stick['distance'] != undefined ? stick.distance : 0;
