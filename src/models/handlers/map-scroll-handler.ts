@@ -72,8 +72,10 @@ export class MapScrollHandler extends ScrollHandler {
 
     let mapPosition = this.calculateScrollMapPosition(position);
     let params = {
-      scrollLeft: mapPosition.x,
-      scrollTop: mapPosition.y
+      scrollTo: {
+        x: mapPosition.x,
+        y: mapPosition.y
+      }
     };
     let obs = new Subject();
 
