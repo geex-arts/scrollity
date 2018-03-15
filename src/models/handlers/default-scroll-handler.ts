@@ -16,7 +16,7 @@ export class DefaultScrollHandler extends ScrollHandler {
       return;
     }
 
-    const estimatedPosition = this._position.value + delta;
+    const estimatedPosition = this.instantPosition + delta;
     const position = this.normalizePosition(estimatedPosition);
 
     this.scrollTo(position, duration, ease, true);

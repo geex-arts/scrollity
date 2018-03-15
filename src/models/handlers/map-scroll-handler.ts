@@ -45,7 +45,7 @@ export class MapScrollHandler extends ScrollHandler {
       .map(item => item.getDistance(this.viewportSize))
       .reduce((sum, current) => sum + current);
 
-    const estimatedPosition = this.position + delta;
+    const estimatedPosition = this.instantPosition + delta;
     let position;
 
     if (estimatedPosition < 0) {
