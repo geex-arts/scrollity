@@ -27,7 +27,7 @@ var DefaultScrollHandler = /** @class */ (function (_super) {
         if (this.preventScroll(delta)) {
             return;
         }
-        var estimatedPosition = this._position.value + delta;
+        var estimatedPosition = this.instantPosition + delta;
         var position = this.normalizePosition(estimatedPosition);
         this.scrollTo(position, duration, ease, true);
         if (estimatedPosition > position) {
@@ -41,6 +41,9 @@ var DefaultScrollHandler = /** @class */ (function (_super) {
         var _this = this;
         if (ease === void 0) { ease = undefined; }
         if (cancellable === void 0) { cancellable = false; }
+        if (position === undefined) {
+            return Observable_1.Observable.of({});
+        }
         if (!cancellable) {
             this.animatingScroll = true;
         }

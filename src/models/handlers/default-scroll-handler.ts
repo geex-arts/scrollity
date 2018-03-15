@@ -16,7 +16,7 @@ export class DefaultScrollHandler extends ScrollHandler {
       return;
     }
 
-    const estimatedPosition = this._position.value + delta;
+    const estimatedPosition = this.instantPosition + delta;
     const position = this.normalizePosition(estimatedPosition);
 
     this.scrollTo(position, duration, ease, true);
@@ -29,6 +29,10 @@ export class DefaultScrollHandler extends ScrollHandler {
   }
 
   scrollTo(position, duration, ease = undefined, cancellable = false): Observable<{}> {
+    if (position === undefined) {
+      return Observable.of({});
+    }
+
     if (!cancellable) {
       this.animatingScroll = true;
     }

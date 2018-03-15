@@ -10,6 +10,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var Observable_1 = require("rxjs/Observable");
 var Subject_1 = require("rxjs/Subject");
 var BehaviorSubject_1 = require("rxjs/BehaviorSubject");
 var _ = require("lodash");
@@ -49,7 +50,7 @@ var MapScrollHandler = /** @class */ (function (_super) {
         var totalDistance = this._scrollMap
             .map(function (item) { return item.getDistance(_this.viewportSize); })
             .reduce(function (sum, current) { return sum + current; });
-        var estimatedPosition = this.position + delta;
+        var estimatedPosition = this.instantPosition + delta;
         var position;
         if (estimatedPosition < 0) {
             position = 0;
@@ -72,13 +73,18 @@ var MapScrollHandler = /** @class */ (function (_super) {
         var _this = this;
         if (ease === void 0) { ease = undefined; }
         if (cancellable === void 0) { cancellable = false; }
+        if (position === undefined) {
+            return Observable_1.Observable.of({});
+        }
         if (!cancellable) {
             this.animatingScroll = true;
         }
         var mapPosition = this.calculateScrollMapPosition(position);
         var params = {
-            scrollLeft: mapPosition.x,
-            scrollTop: mapPosition.y
+            scrollTo: {
+                x: mapPosition.x,
+                y: mapPosition.y
+            }
         };
         var obs = new Subject_1.Subject();
         if (ease) {
