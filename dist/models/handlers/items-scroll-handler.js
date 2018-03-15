@@ -53,6 +53,9 @@ var ItemsScrollHandler = /** @class */ (function (_super) {
         var _this = this;
         if (ease === void 0) { ease = undefined; }
         if (cancellable === void 0) { cancellable = false; }
+        if (position === undefined) {
+            return Observable_1.Observable.of({});
+        }
         if (!cancellable) {
             this.animatingScroll = true;
         }
