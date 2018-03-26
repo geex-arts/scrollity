@@ -81,8 +81,8 @@ export class WheelScrollSource implements ScrollSource {
       deltaY = e.wheelDelta / DELTA_SCALE.OTHERS;
     }
 
-    deltaX *= speed;
-    deltaY *= speed;
+    deltaX *= 4 * speed;
+    deltaY *= 4 * speed;
 
     deltaX = Math.round(deltaX);
     deltaY = Math.round(deltaY);
