@@ -64,8 +64,8 @@ var WheelScrollSource = /** @class */ (function () {
             deltaX = 0;
             deltaY = e.wheelDelta / DELTA_SCALE.OTHERS;
         }
-        deltaX *= speed;
-        deltaY *= speed;
+        deltaX *= 4 * speed;
+        deltaY *= 4 * speed;
         deltaX = Math.round(deltaX);
         deltaY = Math.round(deltaY);
         this.scrollHandler.handleScrollEvent(e, deltaX, deltaY, 0.16, undefined);
