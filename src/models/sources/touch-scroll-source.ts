@@ -11,6 +11,7 @@ export class TouchScrollSource implements ScrollSource {
   touchEndListener: any;
   lastTouch;
   touchMoves = [];
+  dragging = false;
 
   constructor(private scrollHandler: ScrollHandler,
               private zone: NgZone) { }
@@ -29,23 +30,25 @@ export class TouchScrollSource implements ScrollSource {
         return this.handleTouchEndEvent(e);
       };
 
-      document.body.addEventListener('touchstart', this.touchStartListener);
-      document.body.addEventListener('touchmove', this.touchMoveListener);
-      document.body.addEventListener('touchend', this.touchEndListener);
+      window.addEventListener('touchstart', this.touchStartListener);
+      window.addEventListener('touchmove', this.touchMoveListener);
+      window.addEventListener('touchend', this.touchEndListener);
+      window.addEventListener('touchcancel', this.touchEndListener);
     });
   }
 
   unbind() {
     if (this.touchStartListener) {
-      document.body.removeEventListener('touchstart', this.touchStartListener);
+      window.removeEventListener('touchstart', this.touchStartListener);
     }
 
     if (this.touchMoveListener) {
-      document.body.removeEventListener('touchend', this.touchMoveListener);
+      window.removeEventListener('touchmove', this.touchEndListener);
     }
 
     if (this.touchEndListener) {
-      document.body.removeEventListener('touchmove', this.touchEndListener);
+      window.removeEventListener('touchend', this.touchMoveListener);
+      window.removeEventListener('touchcancel', this.touchMoveListener);
     }
   }
 
@@ -62,12 +65,17 @@ export class TouchScrollSource implements ScrollSource {
 
     this.lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     this.touchMoves = [];
+    this.dragging = true;
 
     return false;
   }
 
   handleTouchMoveEvent(e) {
     if (!this.scrollHandler.handleAllowed) {
+      return false;
+    }
+
+    if (!this.dragging) {
       return false;
     }
 
@@ -103,7 +111,12 @@ export class TouchScrollSource implements ScrollSource {
       return false;
     }
 
+    if (!this.dragging) {
+      return false;
+    }
+
     this.lastTouch = undefined;
+    this.dragging = false;
 
     if (this.scrollHandler.animatingScroll) {
       return false;
