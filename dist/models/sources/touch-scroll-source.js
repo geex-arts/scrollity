@@ -6,6 +6,7 @@ var TouchScrollSource = /** @class */ (function () {
         this.scrollHandler = scrollHandler;
         this.zone = zone;
         this.touchMoves = [];
+        this.dragging = false;
     }
     TouchScrollSource.prototype.bind = function () {
         var _this = this;
@@ -19,20 +20,22 @@ var TouchScrollSource = /** @class */ (function () {
             _this.touchEndListener = function (e) {
                 return _this.handleTouchEndEvent(e);
             };
-            document.body.addEventListener('touchstart', _this.touchStartListener);
-            document.body.addEventListener('touchmove', _this.touchMoveListener);
-            document.body.addEventListener('touchend', _this.touchEndListener);
+            window.addEventListener('touchstart', _this.touchStartListener);
+            window.addEventListener('touchmove', _this.touchMoveListener);
+            window.addEventListener('touchend', _this.touchEndListener);
+            window.addEventListener('touchcancel', _this.touchEndListener);
         });
     };
     TouchScrollSource.prototype.unbind = function () {
         if (this.touchStartListener) {
-            document.body.removeEventListener('touchstart', this.touchStartListener);
+            window.removeEventListener('touchstart', this.touchStartListener);
         }
         if (this.touchMoveListener) {
-            document.body.removeEventListener('touchend', this.touchMoveListener);
+            window.removeEventListener('touchmove', this.touchEndListener);
         }
         if (this.touchEndListener) {
-            document.body.removeEventListener('touchmove', this.touchEndListener);
+            window.removeEventListener('touchend', this.touchMoveListener);
+            window.removeEventListener('touchcancel', this.touchMoveListener);
         }
     };
     TouchScrollSource.prototype.handleTouchStartEvent = function (e) {
@@ -45,10 +48,14 @@ var TouchScrollSource = /** @class */ (function () {
         }
         this.lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         this.touchMoves = [];
+        this.dragging = true;
         return false;
     };
     TouchScrollSource.prototype.handleTouchMoveEvent = function (e) {
         if (!this.scrollHandler.handleAllowed) {
+            return false;
+        }
+        if (!this.dragging) {
             return false;
         }
         e.preventDefault();
@@ -74,7 +81,11 @@ var TouchScrollSource = /** @class */ (function () {
         if (!this.scrollHandler.handleAllowed) {
             return false;
         }
+        if (!this.dragging) {
+            return false;
+        }
         this.lastTouch = undefined;
+        this.dragging = false;
         if (this.scrollHandler.animatingScroll) {
             return false;
         }

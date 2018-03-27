@@ -9,6 +9,7 @@ export declare class TouchScrollSource implements ScrollSource {
     touchEndListener: any;
     lastTouch: any;
     touchMoves: any[];
+    dragging: boolean;
     constructor(scrollHandler: ScrollHandler, zone: NgZone);
     bind(): void;
     unbind(): void;
